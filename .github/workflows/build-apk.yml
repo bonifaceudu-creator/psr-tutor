@@ -24,7 +24,7 @@ jobs:
       with:
         node-version: '20'
 
-    - name: Setup Specific Gradle 8.7 Wrapper
+    - name: Setup Specific Gradle 8.7 Environment Baseline
       uses: gradle/actions/setup-gradle@v4
       with:
         gradle-version: '8.7'
@@ -46,11 +46,6 @@ jobs:
 
     - name: Add Android App Compilation Layer
       run: cordova platform add android --no-telemetry
-
-    - name: Force Build Layer to use Local Gradle 8.7 Wrapper
-      run: |
-        cd platforms/android
-        gradle wrapper --gradle-version 8.7
 
     - name: Compile Debug APK Build
       run: cordova build android --debug --no-telemetry
