@@ -1,188 +1,43 @@
-
-name: Build PSR Tutor APK
+name: Build Android APK
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
-  build-apk:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout PSR Tutor
-        uses: actions/checkout@v4
+    - name: Checkout Source Code
+      uses: actions/checkout@v4
 
-      - name: Set up Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
+    - name: Set up Java JDK Runtime
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+    - name: Install Node.js Environment
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
 
-      - name: Install Android SDK
-        run: |
-          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+    - name: Install Cordova Compiler globally
+      run: npm install -g cordova
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.13'
+    - name: Restore Project Dependencies
+      run: npm install
 
-      - name: Create Android project
-        run: |
-          mkdir -p app/src/main/java/com/psrtutor/app
-          mkdir -p app/src/main/res/values
-          mkdir -p app/src/main/res/mipmap-xxxhdpi
-          mkdir -p app/src/main/assets
+    - name: Add Android App Compilation Layer
+      run: cordova platform add android --no-telemetry
 
-          cp index.html app/src/main/assets/
-          cp app.js app/src/main/assets/
-          cp style.css app/src/main/assets/
-          cp psr_data.json app/src/main/assets/
-          cp manifest.json app/src/main/assets/
-          cp sw.js app/src/main/assets/
-          cp icon-512.png app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+    - name: Compile Debug APK Build
+      run: cordova build android --debug --no-telemetry
 
-          cat > settings.gradle <<'EOF'
-          pluginManagement {
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
-          }
-
-          dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-          }
-
-          rootProject.name = "PSRTutor"
-          include(":app")
-          EOF
-
-          cat > build.gradle <<'EOF'
-          plugins {
-              id 'com.android.application' version '8.13.2' apply false
-          }
-          EOF
-
-          cat > app/build.gradle <<'EOF'
-          plugins {
-              id 'com.android.application'
-          }
-
-          android {
-              namespace 'com.psrtutor.app'
-              compileSdk 35
-
-              defaultConfig {
-                  applicationId 'com.psrtutor.app'
-                  minSdk 26
-                  targetSdk 35
-                  versionCode 1
-                  versionName '1.0'
-              }
-          }
-          EOF
-
-          cat > app/src/main/res/values/styles.xml <<'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <resources>
-              <style name="AppTheme"
-                     parent="android:style/Theme.Material.Light.NoActionBar">
-                  <item name="android:fontFamily">sans</item>
-                  <item name="android:colorAccent">#1B3A5F</item>
-                  <item name="android:windowLightStatusBar">true</item>
-                  <item name="android:statusBarColor">#FFFFFF</item>
-                  <item name="android:navigationBarColor">#FFFFFF</item>
-              </style>
-          </resources>
-          EOF
-
-          cat > app/src/main/AndroidManifest.xml <<'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
-              <application
-                  android:theme="@style/AppTheme"
-                  android:label="PSR Tutor"
-                  android:icon="@mipmap/ic_launcher"
-                  android:allowBackup="false"
-                  android:supportsRtl="true">
-
-                  <activity
-                      android:name=".MainActivity"
-                      android:screenOrientation="portrait"
-                      android:exported="true">
-
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
-
-                  </activity>
-
-              </application>
-
-          </manifest>
-          EOF
-
-          cat > app/src/main/java/com/psrtutor/app/MainActivity.java <<'EOF'
-          package com.psrtutor.app;
-
-          import android.app.Activity;
-          import android.os.Bundle;
-          import android.webkit.WebSettings;
-          import android.webkit.WebView;
-          import android.webkit.WebViewClient;
-
-          public class MainActivity extends Activity {
-
-              private WebView webView;
-
-              @Override
-              protected void onCreate(Bundle savedInstanceState) {
-                  super.onCreate(savedInstanceState);
-
-                  webView = new WebView(this);
-                  webView.setWebViewClient(new WebViewClient());
-
-                  WebSettings settings = webView.getSettings();
-                  settings.setJavaScriptEnabled(true);
-                  settings.setDomStorageEnabled(true);
-                  settings.setAllowFileAccess(true);
-                  settings.setAllowContentAccess(true);
-
-                  webView.loadUrl("file:///android_asset/index.html");
-
-                  setContentView(webView);
-              }
-
-              @Override
-              public void onBackPressed() {
-                  if (webView.canGoBack()) {
-                      webView.goBack();
-                  } else {
-                      super.onBackPressed();
-                  }
-              }
-          }
-          EOF
-
-      - name: Build debug APK
-        run: gradle assembleDebug --no-daemon
-
-      - name: Upload PSR Tutor APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: PSR-Tutor-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+    - name: Upload Finished APK Asset
+      uses: actions/upload-artifact@v4
+      with:
+        name: PSR_Engine_Debug_APK
+        path: platforms/android/app/build/outputs/apk/debug/app-debug.apk
