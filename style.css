@@ -196,3 +196,72 @@ mark {
     font-size: 0.92rem !important; /* Slightly reduced from 0.85rem for a sharper mobile fit */
     padding: 6px 10px !important;  /* Tighter padding to shrink the button boxes */
 }
+
+/* Full-Screen Splash Overlay Styles */
+.splash-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #ffffff; /* Sets background colour to block default white blink instantly */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; /* Forces layer above sticky header elements completely */
+    transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+}
+
+/* Branding Alignment Layout Box */
+.splash-branding-box {
+    text-align: center;
+}
+
+/* App Splash Logo Scaling Rules */
+.splash-logo {
+    width: 110px;
+    height: auto;
+    object-fit: contain;
+    margin-bottom: 25px;
+    animation: pulseScaleIntro 2s infinite ease-in-out; /* Smooth pulsing image animation */
+}
+
+/* Smooth Pulsing Keyframe Effect */
+@keyframes pulseScaleIntro {
+    0% { transform: scale(1); opacity: 0.9; }
+    50% { transform: scale(1.04); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.9; }
+}
+
+/* Modern Tighter Performance Loading Ring Spinner */
+.loading-ring-spinner {
+    width: 28px;
+    height: 28px;
+    margin: 0 auto 12px auto;
+    border: 3px solid #e2e8f0;
+    border-top: 3px solid #008751; /* Institutional green accents matching rule banners */
+    border-radius: 50%;
+    animation: continuousSpinLoop 0.8s linear infinite;
+}
+
+@keyframes continuousSpinLoop {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Compact Splash Subtext Metrics */
+.splash-loading-text {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #718096;
+    letter-spacing: 0.5px;
+    margin: 0;
+}
+
+/* Hidden Utility State Modifier */
+.splash-hidden-state {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none; /* Safely permits tap touch actions underneath once gone */
+}
+
