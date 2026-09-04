@@ -13,7 +13,7 @@ jobs:
     - name: Checkout Source Code
       uses: actions/checkout@v4
 
-    - name: Set up Java JDK 17 Runtime (Required for Gradle 9+)
+    - name: Set up Java JDK 17 Runtime
       uses: actions/setup-java@v4
       with:
         distribution: 'zulu'
@@ -23,6 +23,11 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20'
+
+    - name: Setup Specific Gradle 8.7 Wrapper (Fixes XmlParser Error)
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        gradle-version: '8.7'
 
     - name: Install Cordova Compiler globally
       run: npm install -g cordova
@@ -37,6 +42,11 @@ jobs:
 
     - name: Add Android App Compilation Layer
       run: cordova platform add android --no-telemetry
+
+    - name: Force Build Layer to use Local Gradle 8.7 Wrapper
+      run: |
+        cd platforms/android
+        gradle wrapper --gradle-version 8.7
 
     - name: Compile Debug APK Build
       run: cordova build android --debug --no-telemetry
