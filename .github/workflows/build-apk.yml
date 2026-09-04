@@ -24,10 +24,14 @@ jobs:
       with:
         node-version: '20'
 
-    - name: Setup Specific Gradle 8.7 Wrapper (Fixes XmlParser Error)
+    - name: Setup Specific Gradle 8.7 Wrapper
       uses: gradle/actions/setup-gradle@v4
       with:
         gradle-version: '8.7'
+
+    - name: Pre-Fetch Mandatory Android SDK Build Tools (Version 33.0.2)
+      run: |
+        echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "build-tools;33.0.2"
 
     - name: Install Cordova Compiler globally
       run: npm install -g cordova
