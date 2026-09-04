@@ -47,7 +47,15 @@
     </main>
 
 
-
+<script>
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js")
+            .then(() => console.log("PSR Tutor offline service worker registered"))
+            .catch(error => console.error("Service worker registration failed:", error));
+    });
+}
+</script>
     <!-- We link our local database and logic at the bottom -->
     <script src="app.js"></script>
 </body>
