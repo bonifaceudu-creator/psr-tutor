@@ -13,16 +13,16 @@ jobs:
     - name: Checkout Source Code
       uses: actions/checkout@v4
 
-    - name: Set up Java JDK Runtime
+    - name: Set up Java JDK 11 Runtime (Required for Cordova 12)
       uses: actions/setup-java@v4
       with:
         distribution: 'zulu'
-        java-version: '17'
+        java-version: '11'
 
     - name: Install Node.js Environment
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '18'
 
     - name: Install Cordova Compiler globally
       run: npm install -g cordova
