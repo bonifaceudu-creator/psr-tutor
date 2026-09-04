@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nigeria PSR Offline Search</title>
+    <!-- We link to our styles file here -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header Section -->
+    <header>
+        <h1>Nigeria PSR</h1>
+        <p>Public Service Rules (Offline Index)</p>
+    </header>
+
+    <!-- Search Section -->
+        <!-- Search and Filtering Section -->
+        <!-- Search and Filtering Section -->
+    <main>
+        <!-- Wrapper Container to lock all controls at the top -->
+        <div class="sticky-header-wrapper">
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Search by keyword or rule (e.g., 030402)..." 
+                    oninput="performSearch()"
+                >
+            </div>
+
+            <!-- Filter Subsystem -->
+            <div class="quick-filters">
+                <select id="chapterSelector" onchange="filterChapter()"></select>
+                <!-- New toggle button for bookmarks -->
+                <button id="bookmarkToggleBtn" onclick="toggleBookmarkFilter()" style="background-color: #fef3c7; color: #92400e;">⭐ Bookmarks</button>
+                
+                <button onclick="clearFilter()">Reset</button>
+                
+            </div>
+        </div>
+
+        <!-- Search Results Injection Nodes (This scrolls underneath smoothly) -->
+        <div id="resultsCount" class="results-count"></div>
+        <div id="searchResults" class="results-list"></div>
+    </main>
+
+
+
+    <!-- We link our local database and logic at the bottom -->
+    <script src="app.js"></script>
+</body>
+</html>
