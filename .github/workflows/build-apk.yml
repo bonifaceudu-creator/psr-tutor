@@ -13,16 +13,16 @@ jobs:
     - name: Checkout Source Code
       uses: actions/checkout@v4
 
-    - name: Set up Java JDK 11 Runtime
+    - name: Set up Java JDK 17 Runtime (Required for Gradle 9+)
       uses: actions/setup-java@v4
       with:
         distribution: 'zulu'
-        java-version: '11'
+        java-version: '17'
 
     - name: Install Node.js Environment
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
 
     - name: Install Cordova Compiler globally
       run: npm install -g cordova
