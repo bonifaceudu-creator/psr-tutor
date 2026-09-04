@@ -1,1 +1,25 @@
 
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.barry.psrengine" version="1.0.0" xmlns="http://w3.org" xmlns:cdv="http://apache.org">
+    <name>Nigeria PSR Engine</name>
+    <description>Offline Search Engine for the Federal Public Service Rules.</description>
+    <author email="barry@example.com" href="https://github.com">Barry Dev</author>
+    <content src="index.html" />
+    <access origin="*" />
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+    <preference name="Orientation" value="portrait" />
+
+    <!-- Fallback master app icon -->
+    <icon src="res/icon.png" />
+
+    <!-- Link your multi-density Android icons -->
+    <platform name="android">
+        <icon src="res/ldpi.png" density="ldpi" />
+        <icon src="res/mdpi.png" density="mdpi" />
+        <icon src="res/hdpi.png" density="hdpi" />
+        <icon src="res/xhdpi.png" density="xhdpi" />
+        <icon src="res/xxhdpi.png" density="xxhdpi" />
+        <icon src="res/xxxhdpi.png" density="xxxhdpi" />
+    </platform>
+</widget>
