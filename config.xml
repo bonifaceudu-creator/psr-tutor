@@ -1,4 +1,3 @@
-
 <?xml version='1.0' encoding='utf-8'?>
 <widget id="com.barry.psrengine" version="1.0.0" xmlns="http://w3.org" xmlns:cdv="http://apache.org">
     <name>Nigeria PSR Engine</name>
@@ -10,16 +9,12 @@
     <allow-intent href="https://*/*" />
     <preference name="Orientation" value="portrait" />
 
-    <!-- Fallback master app icon -->
-    <icon src="res/icon.png" />
+    <!-- Fallback default app icon linked directly from your root folder -->
+    <icon src="icon-512.png" />
 
-    <!-- Link your multi-density Android icons -->
+    <!-- Link your available icon sizes for Android density scaling -->
     <platform name="android">
-        <icon src="res/ldpi.png" density="ldpi" />
-        <icon src="res/mdpi.png" density="mdpi" />
-        <icon src="res/hdpi.png" density="hdpi" />
-        <icon src="res/xhdpi.png" density="xhdpi" />
-        <icon src="res/xxhdpi.png" density="xxhdpi" />
-        <icon src="res/xxxhdpi.png" density="xxxhdpi" />
+        <icon src="icon-192.png" density="xhdpi" />
+        <icon src="icon-512.png" density="xxxhdpi" />
     </platform>
 </widget>
