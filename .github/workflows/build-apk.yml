@@ -8,18 +8,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
-    # Change "YOUR_SUBFOLDER_NAME" to the exact name of the folder where your files are sitting on GitHub!
-    # For example, if your folder is named barryPSRproject, write: barryPSRproject
-    defaults:
-      run:
-        working-directory: ./YOUR_SUBFOLDER_NAME
 
     steps:
     - name: Checkout Source Code
       uses: actions/checkout@v4
 
-    - name: Set up Java JDK 11 Runtime (Required for Cordova 12)
+    - name: Set up Java JDK 11 Runtime
       uses: actions/setup-java@v4
       with:
         distribution: 'zulu'
@@ -32,6 +26,11 @@ jobs:
 
     - name: Install Cordova Compiler globally
       run: npm install -g cordova
+
+    - name: Pre-build Asset Optimization
+      run: |
+        mkdir -p www
+        mv index.html style.css app.js psr_data.json www/ || true
 
     - name: Restore Project Dependencies
       run: npm install
@@ -46,4 +45,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: PSR_Engine_Debug_APK
-        path: ${{ github.workspace }}/YOUR_SUBFOLDER_NAME/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+        path: platforms/android/app/build/outputs/apk/debug/app-debug.apk
