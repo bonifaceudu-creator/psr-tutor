@@ -8,6 +8,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    
+    # Change "YOUR_SUBFOLDER_NAME" to the exact name of the folder where your files are sitting on GitHub!
+    # For example, if your folder is named barryPSRproject, write: barryPSRproject
+    defaults:
+      run:
+        working-directory: ./YOUR_SUBFOLDER_NAME
 
     steps:
     - name: Checkout Source Code
@@ -40,4 +46,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: PSR_Engine_Debug_APK
-        path: platforms/android/app/build/outputs/apk/debug/app-debug.apk
+        path: ${{ github.workspace }}/YOUR_SUBFOLDER_NAME/platforms/android/app/build/outputs/apk/debug/app-debug.apk
