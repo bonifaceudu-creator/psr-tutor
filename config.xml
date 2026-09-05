@@ -6,7 +6,7 @@
     xmlns="http://www.w3.org/ns/widgets"
     xmlns:cdv="http://cordova.apache.org/ns/1.0">
 
-    <name>PSR Tutor</name>
+    <name>Nigeria PSR Engine</name>
 
     <description>
         Offline Search Engine for the Federal Public Service Rules.
@@ -29,20 +29,18 @@
         name="Orientation"
         value="portrait" />
 
-
-    <!-- =========================================
-         ANDROID 12+ NATIVE SPLASH
-         ========================================= -->
+    <!-- Android native splash -->
+    <preference
+        name="SplashScreenBackgroundColor"
+        value="#1a1f2c" />
 
     <preference
         name="AndroidWindowSplashScreenBackground"
         value="#1a1f2c" />
-    <!-- =========================================
-         LEGACY ANDROID SPLASH FALLBACK
-         ========================================= -->
+
     <preference
-        name="BackgroundColor"
-        value="0xff1a1f2c" />
+        name="AndroidWindowSplashScreenAnimatedIcon"
+        value="res/screen/android/splashscreen.xml" />
 
     <preference
         name="SplashScreenDelay"
@@ -52,17 +50,12 @@
         name="AutoHideSplashScreen"
         value="true" />
 
+    <preference
+        name="FadeSplashScreen"
+        value="false" />
 
-    <!-- =========================================
-         APPLICATION ICON
-         ========================================= -->
-
+    <!-- Normal application icon -->
     <icon src="icon-512.png" />
-
-
-    <!-- =========================================
-         ANDROID ICON DENSITIES
-         ========================================= -->
 
     <platform name="android">
 
