@@ -26,7 +26,7 @@ window.onload = function() {
                 if (splash) {
                     splash.classList.add('splash-hidden-state');
                 }
-            }, 800); // 800ms delay lets text cards render perfectly behind the scene first
+            }, 2200); // 800ms delay lets text cards render perfectly behind the scene first
             // =====================================================
 
         })
