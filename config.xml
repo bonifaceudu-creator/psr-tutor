@@ -6,7 +6,7 @@
     xmlns="http://www.w3.org/ns/widgets"
     xmlns:cdv="http://cordova.apache.org/ns/1.0">
 
-    <name>Nigeria PSR Engine</name>
+    <name>PSR Tutor</name>
 
     <description>
         Offline Search Engine for the Federal Public Service Rules.
@@ -37,20 +37,9 @@
     <preference
         name="AndroidWindowSplashScreenBackground"
         value="#1a1f2c" />
-
-    <preference
-        name="AndroidWindowSplashScreenAnimatedIcon"
-        value="icon-512.png" />
-
-    <preference
-        name="AndroidWindowSplashScreenIconBackgroundColor"
-        value="#1a1f2c" />
-
-
     <!-- =========================================
          LEGACY ANDROID SPLASH FALLBACK
          ========================================= -->
-
     <preference
         name="BackgroundColor"
         value="0xff1a1f2c" />
