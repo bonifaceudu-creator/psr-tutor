@@ -9,7 +9,12 @@
     <allow-intent href="https://*/*" />
     <preference name="Orientation" value="portrait" />
 
-    <!-- System boot layout adjustments to eliminate initial blank flashes -->
+    <!-- Modern Android Boot System Color Interceptors (Forces Soft Charcoal System Background) -->
+    <preference name="AndroidWindowSplashScreenBackground" value="#1a1f2c" />
+    <preference name="AndroidWindowSplashScreenAnimatedIcon" value="icon-512.png" />
+    <preference name="AndroidWindowSplashScreenIconBackgroundColor" value="#1a1f2c" />
+
+    <!-- Fallback Legacy Preferences -->
     <preference name="BackgroundColor" value="0xff1a1f2c" />
     <preference name="SplashScreenDelay" value="0" />
     <preference name="AutoHideSplashScreen" value="true" />
@@ -17,7 +22,7 @@
     <!-- Fallback default app icon linked directly from your root folder -->
     <icon src="icon-512.png" />
 
-    <!-- Link your available icon sizes for Android density scaling (Fixed path references) -->
+    <!-- Link your available icon sizes for Android density scaling -->
     <platform name="android">
         <icon src="icon-192.png" density="xhdpi" />
         <icon src="icon-512.png" density="xxxhdpi" />
