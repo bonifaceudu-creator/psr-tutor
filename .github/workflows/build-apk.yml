@@ -36,13 +36,12 @@ jobs:
     - name: Install Cordova Compiler globally
       run: npm install -g cordova
 
-        - name: Pre-build Asset Optimization
+    - name: Pre-build Asset Optimization
       run: |
         mkdir -p www
         # Copies your icon safely into the internal asset directory layout
         cp icon-512.png www/ || true 
         mv index.html style.css app.js psr_data.json www/ || true
-
 
     - name: Restore Project Dependencies
       run: npm install
