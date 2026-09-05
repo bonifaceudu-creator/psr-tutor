@@ -8,6 +8,10 @@
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />
     <preference name="Orientation" value="portrait" />
+        <!-- System boot layout adjustments to eliminate initial blank flashes -->
+    <preference name="BackgroundColor" value="0xffffffff" />
+    <preference name="SplashScreenDelay" value="0" />
+    <preference name="AutoHideSplashScreen" value="true" />
 
     <!-- Fallback default app icon linked directly from your root folder -->
     <icon src="icon-512.png" />
