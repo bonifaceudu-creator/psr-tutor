@@ -264,4 +264,3 @@ mark {
     visibility: hidden;
     pointer-events: none; /* Safely permits tap touch actions underneath once gone */
 }
-

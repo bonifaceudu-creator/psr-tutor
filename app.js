@@ -17,12 +17,25 @@ window.onload = function() {
             buildDynamicDropdown(); 
             applyFilters();        
             console.log(`Successfully indexed ${publicServiceRules.length} detailed PSR rules offline.`);
+            
+            // =====================================================
+            // 🚀 INJECT THE NEW ANIMATED SPLASH SCREEN CODE HERE:
+            // =====================================================
+            setTimeout(() => {
+                const splash = document.getElementById('appSplashScreen');
+                if (splash) {
+                    splash.classList.add('splash-hidden-state');
+                }
+            }, 800); // 800ms delay lets text cards render perfectly behind the scene first
+            // =====================================================
+
         })
         .catch(error => {
             console.error("Error loading offline rule dataset:", error);
             alert("To run local data files smoothly on mobile, tap the Play/Preview button directly inside your Acode editor toolbar!");
         });
 };
+
 
 function buildDynamicDropdown() {
     const selector = document.getElementById('chapterSelector');
