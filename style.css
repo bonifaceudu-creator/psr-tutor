@@ -198,57 +198,47 @@ mark {
 }
 
 /* Full-Screen Splash Overlay Styles */
-.splash-overlay {
+/* Premium Soft Dark Splash Overlay Styles */
+.splash-overlay.dark-theme-splash {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: #ffffff; /* Sets background colour to block default white blink instantly */
+    background-color: #1a1f2c; /* Softer, deep slate/charcoal color replaces the harsh white blink */
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 9999; /* Forces layer above sticky header elements completely */
+    z-index: 9999;
     transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
 }
 
-/* Branding Alignment Layout Box */
 .splash-branding-box {
     text-align: center;
 }
 
-/* App Splash Logo Scaling Rules */
-/* Scaled Up App Splash Logo Settings */
+/* Enlarged Master Branding Logo Settings */
 .splash-logo {
-    width: 165px; /* Enlarged from 110px for a bold mobile presence */
+    width: 165px;
     height: auto;
     object-fit: contain;
     margin-bottom: 25px;
-    animation: pulseScaleIntro 1.8s infinite ease-in-out; /* Slightly accelerated for energy */
+    animation: smoothPulseIntro 1.8s infinite ease-in-out;
 }
 
-/* Enhanced Pulsing Range to accommodate the larger graphic size footprint cleanly */
-@keyframes pulseScaleIntro {
+@keyframes smoothPulseIntro {
     0% { transform: scale(1); opacity: 0.95; }
-    50% { transform: scale(1.06); opacity: 1; }
+    50% { transform: scale(1.04); opacity: 1; }
     100% { transform: scale(1); opacity: 0.95; }
 }
 
-
-/* Smooth Pulsing Keyframe Effect */
-@keyframes pulseScaleIntro {
-    0% { transform: scale(1); opacity: 0.9; }
-    50% { transform: scale(1.04); opacity: 1; }
-    100% { transform: scale(1); opacity: 0.9; }
-}
-
-/* Modern Tighter Performance Loading Ring Spinner */
+/* Institutional Green Tint Accent Loading Ring Spinner */
 .loading-ring-spinner {
     width: 28px;
     height: 28px;
-    margin: 0 auto 12px auto;
-    border: 3px solid #e2e8f0;
-    border-top: 3px solid #008751; /* Institutional green accents matching rule banners */
+    margin: 0 auto 20px auto;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top: 3px solid #00a86b; /* Vibrant institutional green tint accent */
     border-radius: 50%;
     animation: continuousSpinLoop 0.8s linear infinite;
 }
@@ -258,18 +248,43 @@ mark {
     100% { transform: rotate(360deg); }
 }
 
-/* Compact Splash Subtext Metrics */
-.splash-loading-text {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #718096;
+/* Main App Title Text Animation Sequence */
+.splash-main-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 0 6px 0;
     letter-spacing: 0.5px;
-    margin: 0;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: textSlideUpFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation-delay: 0.2s; /* Slides in right after icon loads */
 }
 
-/* Hidden Utility State Modifier */
+/* Secondary Credit Text Subtitle Animation Sequence */
+.splash-credits-text {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #a0aec0; /* Soft secondary muted gray color text */
+    margin: 0;
+    letter-spacing: 1px;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: textSlideUpFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation-delay: 0.7s; /* Appears immediately after 'Your PSR Tutor' reads */
+}
+
+@keyframes textSlideUpFadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Native Background Overlay Color Synchronization */
 .splash-hidden-state {
     opacity: 0;
     visibility: hidden;
-    pointer-events: none; /* Safely permits tap touch actions underneath once gone */
+    pointer-events: none;
 }
+
