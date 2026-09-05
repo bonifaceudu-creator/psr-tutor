@@ -218,13 +218,22 @@ mark {
 }
 
 /* App Splash Logo Scaling Rules */
+/* Scaled Up App Splash Logo Settings */
 .splash-logo {
-    width: 110px;
+    width: 165px; /* Enlarged from 110px for a bold mobile presence */
     height: auto;
     object-fit: contain;
     margin-bottom: 25px;
-    animation: pulseScaleIntro 2s infinite ease-in-out; /* Smooth pulsing image animation */
+    animation: pulseScaleIntro 1.8s infinite ease-in-out; /* Slightly accelerated for energy */
 }
+
+/* Enhanced Pulsing Range to accommodate the larger graphic size footprint cleanly */
+@keyframes pulseScaleIntro {
+    0% { transform: scale(1); opacity: 0.95; }
+    50% { transform: scale(1.06); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.95; }
+}
+
 
 /* Smooth Pulsing Keyframe Effect */
 @keyframes pulseScaleIntro {
