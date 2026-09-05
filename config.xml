@@ -1,30 +1,90 @@
-<?xml version='1.0' encoding='utf-8'?>
-<widget id="com.barry.psrengine" version="1.0.0" xmlns="http://w3.org" xmlns:cdv="http://apache.org">
+<?xml version="1.0" encoding="utf-8"?>
+
+<widget
+    id="com.barry.psrengine"
+    version="1.0.0"
+    xmlns="http://www.w3.org/ns/widgets"
+    xmlns:cdv="http://cordova.apache.org/ns/1.0">
+
     <name>Nigeria PSR Engine</name>
-    <description>Offline Search Engine for the Federal Public Service Rules.</description>
-    <author email="barry@example.com" href="https://github.com">Barry Dev</author>
+
+    <description>
+        Offline Search Engine for the Federal Public Service Rules.
+    </description>
+
+    <author
+        email="barry@example.com"
+        href="https://github.com">
+        Barry Dev
+    </author>
+
     <content src="index.html" />
+
     <access origin="*" />
+
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />
-    <preference name="Orientation" value="portrait" />
 
-    <!-- Modern Android Boot System Color Interceptors (Forces Soft Charcoal System Background) -->
-    <preference name="AndroidWindowSplashScreenBackground" value="#1a1f2c" />
-    <preference name="AndroidWindowSplashScreenAnimatedIcon" value="icon-512.png" />
-    <preference name="AndroidWindowSplashScreenIconBackgroundColor" value="#1a1f2c" />
+    <preference
+        name="Orientation"
+        value="portrait" />
 
-    <!-- Fallback Legacy Preferences -->
-    <preference name="BackgroundColor" value="0xff1a1f2c" />
-    <preference name="SplashScreenDelay" value="0" />
-    <preference name="AutoHideSplashScreen" value="true" />
 
-    <!-- Fallback default app icon linked directly from your root folder -->
+    <!-- =========================================
+         ANDROID 12+ NATIVE SPLASH
+         ========================================= -->
+
+    <preference
+        name="AndroidWindowSplashScreenBackground"
+        value="#1a1f2c" />
+
+    <preference
+        name="AndroidWindowSplashScreenAnimatedIcon"
+        value="icon-512.png" />
+
+    <preference
+        name="AndroidWindowSplashScreenIconBackgroundColor"
+        value="#1a1f2c" />
+
+
+    <!-- =========================================
+         LEGACY ANDROID SPLASH FALLBACK
+         ========================================= -->
+
+    <preference
+        name="BackgroundColor"
+        value="0xff1a1f2c" />
+
+    <preference
+        name="SplashScreenDelay"
+        value="0" />
+
+    <preference
+        name="AutoHideSplashScreen"
+        value="true" />
+
+
+    <!-- =========================================
+         APPLICATION ICON
+         ========================================= -->
+
     <icon src="icon-512.png" />
 
-    <!-- Link your available icon sizes for Android density scaling -->
+
+    <!-- =========================================
+         ANDROID ICON DENSITIES
+         ========================================= -->
+
     <platform name="android">
-        <icon src="icon-192.png" density="xhdpi" />
-        <icon src="icon-512.png" density="xxxhdpi" />
+
+        <icon
+            src="icon-192.png"
+            density="xhdpi" />
+
+        <icon
+            src="icon-512.png"
+            density="xxxhdpi" />
+
     </platform>
+
 </widget>

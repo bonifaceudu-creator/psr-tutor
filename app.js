@@ -3,36 +3,77 @@ let publicServiceRules = [];
 let bookmarkedRuleIds = [];
 let showOnlyBookmarks = false;
 
+function hideAppSplash() {
+    const splash = document.getElementById('appSplashScreen');
+
+    if (splash) {
+        splash.classList.add('splash-hidden-state');
+    }
+}
+
 window.onload = function() {
-    // Load existing bookmarks out of your mobile phone's browser memory cache
-    const savedBookmarks = localStorage.getItem('barryPSR_bookmarks');
+
+    // Load saved bookmarks
+    const savedBookmarks =
+        localStorage.getItem('barryPSR_bookmarks');
+
     if (savedBookmarks) {
         bookmarkedRuleIds = JSON.parse(savedBookmarks);
     }
 
+    // Load the offline PSR database
     fetch('psr_data.json')
-        .then(response => response.json())
+
+        .then(response => {
+
+            if (!response.ok) {
+                throw new Error(
+                    `Database request failed: ${response.status}`
+                );
+            }
+
+            return response.json();
+        })
+
         .then(data => {
+
             publicServiceRules = data;
-            buildDynamicDropdown(); 
-            applyFilters();        
-            console.log(`Successfully indexed ${publicServiceRules.length} detailed PSR rules offline.`);
-            
-            // =====================================================
-            // 🚀 INJECT THE NEW ANIMATED SPLASH SCREEN CODE HERE:
-            // =====================================================
+
+            // Build the chapter selector
+            buildDynamicDropdown();
+
+            // Display the initial interface
+            applyFilters();
+
+            console.log(
+                `Successfully indexed ${publicServiceRules.length} detailed PSR rules offline.`
+            );
+
+            /*
+             * The app is now ready.
+             * Give the splash a short finishing moment,
+             * then reveal the application.
+             */
             setTimeout(() => {
-                const splash = document.getElementById('appSplashScreen');
-                if (splash) {
-                    splash.classList.add('splash-hidden-state');
-                }
-            }, 2200); // 800ms delay lets text cards render perfectly behind the scene first
-            // =====================================================
+                hideAppSplash();
+            }, 450);
 
         })
+
         .catch(error => {
-            console.error("Error loading offline rule dataset:", error);
-            alert("To run local data files smoothly on mobile, tap the Play/Preview button directly inside your Acode editor toolbar!");
+
+            console.error(
+                "Error loading offline rule dataset:",
+                error
+            );
+
+            alert(
+                "The offline PSR database could not be loaded. " +
+                "Please reopen the app or check that psr_data.json is present."
+            );
+
+            // Never leave the user trapped on the splash screen
+            hideAppSplash();
         });
 };
 
