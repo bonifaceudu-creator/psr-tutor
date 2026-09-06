@@ -337,3 +337,41 @@ bigBanner.dataset.chapter = rule.chapter;
 function escapeRegExp(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
+
+// Android Back Button
+document.addEventListener("deviceready", function () {
+
+    document.addEventListener("backbutton", function (e) {
+        e.preventDefault();
+
+        // If a chapter is selected, clear the chapter filter first
+        const chapterSelector = document.getElementById("chapterSelector");
+
+        if (chapterSelector && chapterSelector.value !== "") {
+            chapterSelector.value = "";
+            applyFilters();
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+            return;
+        }
+
+        // If a search is active, clear the search first
+        const searchInput = document.getElementById("searchInput");
+
+        if (searchInput && searchInput.value.trim() !== "") {
+            searchInput.value = "";
+            applyFilters();
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+            return;
+        }
+
+        // Otherwise allow Android to close the app
+        navigator.app.exitApp();
+    }, false);
+
+}, false);
