@@ -1,0 +1,61 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Source Code
+      uses: actions/checkout@v4
+
+    - name: Set up Java JDK 17 Runtime
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Install Node.js Environment
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Setup Specific Gradle 8.7 Environment Baseline
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        gradle-version: '8.7'
+
+    - name: Pre-Fetch Mandatory Android SDK Build Tools (Version 33.0.2)
+      run: |
+        echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "build-tools;33.0.2"
+
+    - name: Install Cordova Compiler globally
+      run: npm install -g cordova
+
+    - name: Pre-build Asset Optimization
+      run: |
+        mkdir -p www
+        # Copies your icon safely into the internal asset directory layout
+        cp icon-512.png www/ || true 
+        mv index.html style.css app.js psr_data.json www/ || true
+
+    - name: Restore Project Dependencies
+      run: npm install
+
+    - name: Add Android App Compilation Layer
+      run: |
+      cordova platform add android --no-telemetry
+      cordova plugin add cordova-plugin-exitapp
+
+    - name: Compile Debug APK Build
+      run: cordova build android --debug --no-telemetry
+
+    - name: Upload Finished APK Asset
+      uses: actions/upload-artifact@v4
+      with:
+        name: PSR_Engine_Debug_APK
+        path: platforms/android/app/build/outputs/apk/debug/app-debug.apk
