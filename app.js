@@ -138,7 +138,33 @@ function applyFilters() {
 }
 
 function performSearch() { applyFilters(); }
-function filterChapter() { applyFilters(); }
+function performSearch() {
+    applyFilters();
+}
+
+function filterChapter() {
+    const selector = document.getElementById('chapterSelector');
+    const selectedChapter = selector.value;
+
+    // Display the selected chapter
+    applyFilters();
+
+    // If a chapter was selected, move to its chapter header
+    if (selectedChapter !== "") {
+        requestAnimationFrame(() => {
+            const chapterHeader = document.querySelector(
+                `.chapter-header[data-chapter="${selectedChapter}"]`
+            );
+
+            if (chapterHeader) {
+                chapterHeader.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+            }
+        });
+    }
+}
 
 function toggleBookmarkFilter() {
     showOnlyBookmarks = !showOnlyBookmarks;
@@ -227,6 +253,8 @@ function displayResults(rulesList, selectedChapter, activeQuery) {
     rulesList.forEach(rule => {
         if (rule.chapter !== lastRenderedChapter) {
             const bigBanner = document.createElement('div');
+            bigBanner.className = "chapter-header";
+bigBanner.dataset.chapter = rule.chapter;
             bigBanner.style.background = "#e6f4ea";
             bigBanner.style.color = "#008751";
             bigBanner.style.padding = "12px 16px";
