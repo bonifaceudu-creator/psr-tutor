@@ -6,6 +6,25 @@
     <title>Nigeria PSR Offline Search</title>
     <!-- We link to our styles file here -->
     <link rel="stylesheet" href="style.css">
+    <style>
+    /* Critical startup background.
+       This is intentionally inline so the screen
+       is dark BEFORE style.css finishes loading. */
+
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+        background: #1a1f2c;
+    }
+
+    #appSplashScreen {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        background: #1a1f2c;
+    }
+</style>
 </head>
 <body>
     

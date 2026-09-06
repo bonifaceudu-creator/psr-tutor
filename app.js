@@ -11,7 +11,7 @@ function hideAppSplash() {
     }
 }
 
-window.onload = function() {
+document.addEventListener("DOMContentLoaded", function() {
 
     // Load saved bookmarks
     const savedBookmarks =
@@ -56,7 +56,7 @@ window.onload = function() {
              */
             setTimeout(() => {
                 hideAppSplash();
-            }, 450);
+            }, 1300);
 
         })
 
@@ -75,7 +75,7 @@ window.onload = function() {
             // Never leave the user trapped on the splash screen
             hideAppSplash();
         });
-};
+});
 
 
 function buildDynamicDropdown() {

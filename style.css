@@ -225,13 +225,28 @@ mark {
     visibility: visible;
 
     transition:
-        opacity 0.45s ease,
-        visibility 0.45s ease;
+    opacity 0.7s ease-in-out,
+    visibility 0.7s ease-in-out;
+}
+
+/* Smooth exit animation for splash contents */
+
+.splash-branding-box {
+    transition:
+        opacity 0.55s ease,
+        transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 
-/* Main splash content */
+/* When the splash disappears, gently move the
+   branding backwards while fading it out */
 
+.splash-hidden-state .splash-branding-box {
+    opacity: 0;
+    transform: scale(0.97) translateY(-8px);
+}
+
+/* Main splash content */
 .splash-branding-box {
     width: min(86vw, 360px);
     text-align: center;
@@ -256,7 +271,7 @@ mark {
 
     animation:
         splashLogoIn
-        0.75s
+        0.35s
         cubic-bezier(0.16, 1, 0.3, 1)
         both;
 }
@@ -310,7 +325,7 @@ mark {
 
     animation:
         splashTextIn
-        0.55s
+        0.35s
         0.22s
         cubic-bezier(0.16, 1, 0.3, 1)
         forwards;
@@ -334,7 +349,7 @@ mark {
 
     animation:
         splashTextIn
-        0.55s
+        0.35s
         0.36s
         cubic-bezier(0.16, 1, 0.3, 1)
         forwards;
@@ -360,7 +375,7 @@ mark {
 
     animation:
         splashTextIn
-        0.55s
+        0.35s
         0.50s
         cubic-bezier(0.16, 1, 0.3, 1)
         forwards;
