@@ -146,10 +146,8 @@ function filterChapter() {
     const selector = document.getElementById('chapterSelector');
     const selectedChapter = selector.value;
 
-    // Display the selected chapter
     applyFilters();
 
-    // If a chapter was selected, move to its chapter header
     if (selectedChapter !== "") {
         requestAnimationFrame(() => {
             const chapterHeader = document.querySelector(
@@ -157,9 +155,22 @@ function filterChapter() {
             );
 
             if (chapterHeader) {
-                chapterHeader.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start"
+                const stickyHeader = document.querySelector(
+                    '.sticky-header-wrapper'
+                );
+
+                const offset = stickyHeader
+                    ? stickyHeader.getBoundingClientRect().height + 12
+                    : 12;
+
+                const headerPosition =
+                    chapterHeader.getBoundingClientRect().top +
+                    window.pageYOffset -
+                    offset;
+
+                window.scrollTo({
+                    top: Math.max(0, headerPosition),
+                    behavior: "smooth"
                 });
             }
         });

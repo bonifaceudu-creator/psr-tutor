@@ -271,7 +271,7 @@ mark {
 
     animation:
         splashLogoIn
-        0.35s
+        0.22s
         cubic-bezier(0.16, 1, 0.3, 1)
         both;
 }
@@ -292,8 +292,8 @@ mark {
 @keyframes splashLogoIn {
 
     from {
-        opacity: 0;
-        transform: scale(0.88);
+        opacity: 0.25;
+        transform: scale(0.96);
     }
 
     to {
