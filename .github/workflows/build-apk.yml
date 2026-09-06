@@ -48,8 +48,8 @@ jobs:
 
     - name: Add Android App Compilation Layer
       run: |
-      cordova platform add android --no-telemetry
-      cordova plugin add cordova-plugin-exitapp
+        cordova platform add android --no-telemetry
+        cordova plugin add cordova-plugin-exitapp
 
     - name: Compile Debug APK Build
       run: cordova build android --debug --no-telemetry
