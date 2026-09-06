@@ -137,7 +137,6 @@ function applyFilters() {
     displayResults(filteredRules, selectedChapter, query);
 }
 
-function performSearch() { applyFilters(); }
 function performSearch() {
     applyFilters();
 }
@@ -339,28 +338,8 @@ function escapeRegExp(string) {
 }
 
 // ANDROID HARDWARE BACK BUTTON
+// ANDROID BACK BUTTON TEST
 document.addEventListener("backbutton", function (event) {
     event.preventDefault();
-
-    const chapterSelector = document.getElementById("chapterSelector");
-    const searchInput = document.getElementById("searchInput");
-
-    // If a chapter filter is active, clear it first
-    if (chapterSelector && chapterSelector.value !== "") {
-        chapterSelector.value = "";
-        applyFilters();
-        return;
-    }
-
-    // If a search is active, clear it first
-    if (searchInput && searchInput.value.trim() !== "") {
-        searchInput.value = "";
-        applyFilters();
-        return;
-    }
-
-    // At the main screen: exit the APK
-    if (navigator.app && navigator.app.exitApp) {
-        navigator.app.exitApp();
-    }
+    alert("ANDROID BACK BUTTON DETECTED");
 }, false);
