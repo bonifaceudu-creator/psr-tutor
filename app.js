@@ -338,40 +338,29 @@ function escapeRegExp(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// Android Back Button
-document.addEventListener("deviceready", function () {
+// ANDROID HARDWARE BACK BUTTON
+document.addEventListener("backbutton", function (event) {
+    event.preventDefault();
 
-    document.addEventListener("backbutton", function (e) {
-        e.preventDefault();
+    const chapterSelector = document.getElementById("chapterSelector");
+    const searchInput = document.getElementById("searchInput");
 
-        // If a chapter is selected, clear the chapter filter first
-        const chapterSelector = document.getElementById("chapterSelector");
+    // If a chapter filter is active, clear it first
+    if (chapterSelector && chapterSelector.value !== "") {
+        chapterSelector.value = "";
+        applyFilters();
+        return;
+    }
 
-        if (chapterSelector && chapterSelector.value !== "") {
-            chapterSelector.value = "";
-            applyFilters();
-            window.scrollTo({
-                top: 0,
-                behavior: "smooth"
-            });
-            return;
-        }
+    // If a search is active, clear it first
+    if (searchInput && searchInput.value.trim() !== "") {
+        searchInput.value = "";
+        applyFilters();
+        return;
+    }
 
-        // If a search is active, clear the search first
-        const searchInput = document.getElementById("searchInput");
-
-        if (searchInput && searchInput.value.trim() !== "") {
-            searchInput.value = "";
-            applyFilters();
-            window.scrollTo({
-                top: 0,
-                behavior: "smooth"
-            });
-            return;
-        }
-
-        // Otherwise allow Android to close the app
+    // At the main screen: exit the APK
+    if (navigator.app && navigator.app.exitApp) {
         navigator.app.exitApp();
-    }, false);
-
+    }
 }, false);
