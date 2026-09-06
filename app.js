@@ -337,9 +337,30 @@ function escapeRegExp(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+
 // ANDROID HARDWARE BACK BUTTON
-// ANDROID BACK BUTTON TEST
 document.addEventListener("backbutton", function (event) {
     event.preventDefault();
-    alert("ANDROID BACK BUTTON DETECTED");
+
+    const chapterSelector = document.getElementById("chapterSelector");
+    const searchInput = document.getElementById("searchInput");
+
+    // 1. If a chapter is selected, clear the chapter filter
+    if (chapterSelector && chapterSelector.value !== "") {
+        chapterSelector.value = "";
+        applyFilters();
+        return;
+    }
+
+    // 2. If a search is active, clear the search
+    if (searchInput && searchInput.value.trim() !== "") {
+        searchInput.value = "";
+        applyFilters();
+        return;
+    }
+
+    // 3. Otherwise, exit the Android app
+    if (navigator.app && navigator.app.exitApp) {
+        navigator.app.exitApp();
+    }
 }, false);
