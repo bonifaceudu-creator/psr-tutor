@@ -6,7 +6,7 @@
     xmlns="http://www.w3.org/ns/widgets"
     xmlns:cdv="http://cordova.apache.org/ns/1.0">
 
-    <name>Nigeria PSR Engine</name>
+    <name>PSR Tutor</name>
 
     <description>
         Offline Search Engine for the Federal Public Service Rules.
