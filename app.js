@@ -3,81 +3,152 @@ let publicServiceRules = [];
 let bookmarkedRuleIds = [];
 let showOnlyBookmarks = false;
 
+// Fast search index variables
+let searchIndex = [];
+let searchTimer = null;
+
+// ============================================================
+// PSR INTELLIGENT SEARCH VOCABULARY
+// ============================================================
+const searchSynonyms = {
+    leave: [
+        "leave", "leaves", "absence", "absent",
+        "study leave", "annual leave", "sick leave",
+        "maternity leave", "paternity leave",
+        "examination leave", "sabbatical leave"
+    ],
+    study: [
+        "study", "studies", "studying",
+        "course", "courses",
+        "education", "educational",
+        "academic", "academics",
+        "postgraduate", "post graduate",
+        "higher degree", "degree",
+        "training"
+    ],
+    salary: [
+        "salary", "salaries",
+        "pay", "paid", "payment", "payments",
+        "emolument", "emoluments",
+        "allowance", "allowances"
+    ],
+    promotion: [
+        "promotion", "promotions",
+        "promote", "promoted",
+        "advancement", "advancing",
+        "higher grade", "higher post"
+    ],
+    senior: [
+        "senior",
+        "senior officer", "senior officers",
+        "senior staff",
+        "management",
+        "higher grade",
+        "higher post"
+    ],
+    training: [
+        "training", "train", "trained",
+        "course", "courses",
+        "instruction", "development",
+        "capacity building"
+    ],
+    retirement: [
+        "retirement", "retire", "retired",
+        "pension", "pensions",
+        "service age"
+    ],
+    discipline: [
+        "discipline", "disciplinary",
+        "misconduct", "offence", "offense",
+        "punishment", "sanction",
+        "penalty", "penalties"
+    ],
+    transfer: [
+        "transfer", "transferred",
+        "posting", "posted",
+        "relocation"
+    ]
+};
+// ============================================================
+// FAST SEARCH INDEX & UTILITIES
+// ============================================================
+function normalizeSearchText(text) {
+    return String(text || "")
+        .toLowerCase()
+        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()'"?[\]\\]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildSearchIndex() {
+    searchIndex = publicServiceRules.map(rule => {
+        const searchableText = normalizeSearchText(
+            `${rule.id} ${rule.chapter} ${rule.section} ${rule.rule} ${rule.title} ${rule.content}`
+        );
+        return {
+            id: rule.id,
+            text: searchableText
+        };
+    });
+    console.log(`Fast search index built for ${searchIndex.length} rules.`);
+}
+
 function hideAppSplash() {
     const splash = document.getElementById('appSplashScreen');
-
     if (splash) {
         splash.classList.add('splash-hidden-state');
     }
 }
 
+// ============================================================
+// APP INITIALIZATION
+// ============================================================
 document.addEventListener("DOMContentLoaded", function() {
-
-    // Load saved bookmarks
-    const savedBookmarks =
-        localStorage.getItem('barryPSR_bookmarks');
-
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', performSearch);
+    }
+    
+    // Load saved bookmarks out of localStorage memory
+    const savedBookmarks = localStorage.getItem('barryPSR_bookmarks');
     if (savedBookmarks) {
-        bookmarkedRuleIds = JSON.parse(savedBookmarks);
+        try {
+            bookmarkedRuleIds = JSON.parse(savedBookmarks);
+        } catch(e) {
+            bookmarkedRuleIds = [];
+        }
     }
 
-    // Load the offline PSR database
+    // Fetch the raw rules JSON data file
     fetch('psr_data.json')
-
         .then(response => {
-
             if (!response.ok) {
-                throw new Error(
-                    `Database request failed: ${response.status}`
-                );
+                throw new Error(`Database file missing or failed to fetch: ${response.status}`);
             }
-
             return response.json();
         })
-
         .then(data => {
-
             publicServiceRules = data;
-
-            // Build the chapter selector
+            
+            // Trigger dynamic core systems builders
+            buildSearchIndex();
             buildDynamicDropdown();
-
-            // Display the initial interface
             applyFilters();
 
-            console.log(
-                `Successfully indexed ${publicServiceRules.length} detailed PSR rules offline.`
-            );
-
-            /*
-             * The app is now ready.
-             * Give the splash a short finishing moment,
-             * then reveal the application.
-             */
             setTimeout(() => {
                 hideAppSplash();
             }, 1300);
-
         })
-
         .catch(error => {
-
-            console.error(
-                "Error loading offline rule dataset:",
-                error
-            );
-
-            alert(
-                "The offline PSR database could not be loaded. " +
-                "Please reopen the app or check that psr_data.json is present."
-            );
-
-            // Never leave the user trapped on the splash screen
+            console.error("Initialization loop crash:", error);
+            alert("Database engine mapping failed. Ensure rules file is grouped in the root folder map path.");
             hideAppSplash();
         });
 });
-
-
 function buildDynamicDropdown() {
     const selector = document.getElementById('chapterSelector');
     if (!selector) return;
@@ -116,25 +187,54 @@ function buildDynamicDropdown() {
     });
 }
 
+// ============================================================
+// CONTINUOUS NARROWING AND-LOGIC SEARCH FILTERS
+// ============================================================
 function applyFilters() {
-    const query = document.getElementById('searchInput').value.toLowerCase().trim();
+    const queryInput = document.getElementById('searchInput').value.toLowerCase().trim();
     const selectedChapter = document.getElementById('chapterSelector').value;
     
+    // Clean and split string entries into distinct filtering words tokens
+    const queryCleaned = queryInput.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()'"?[\]\\]/g, " ");
+    const queryTokens = queryCleaned.split(/\s+/).filter(token => token.length > 0);
+
     const filteredRules = publicServiceRules.filter(rule => {
-        const matchesSearch = query === "" || 
-                              rule.id.toLowerCase().includes(query) || 
-                              rule.title.toLowerCase().includes(query) || 
-                              rule.content.toLowerCase().includes(query);
-                              
         const matchesChapter = selectedChapter === "" || rule.chapter === selectedChapter;
-        
-        // Bookmark condition layer filter check
         const matchesBookmarkState = !showOnlyBookmarks || bookmarkedRuleIds.includes(rule.id);
         
-        return matchesSearch && matchesChapter && matchesBookmarkState;
+        if (!matchesChapter || !matchesBookmarkState) return false;
+        if (queryInput === "") return true;
+
+        // Fast Exact Rule ID Identification Hook Shortcut
+        const numericMatch = queryInput.replace(/[^0-9]/g, "");
+        if (numericMatch.length >= 4 && rule.id.includes(numericMatch)) {
+            return true;
+        }
+
+        const searchCanvas = `psr-${rule.id} ${rule.title} ${rule.content}`.toLowerCase();
+        
+        // Pure continuous AND-intersection engine logic: checks tokens and expanded dictionary values
+        return queryTokens.every(token => {
+            if (searchCanvas.includes(token)) return true;
+            
+            // Check cross-reference dictionary equivalents list
+            const alternatives = searchSynonyms[token] || [];
+            return alternatives.some(alt => searchCanvas.includes(alt));
+        });
     });
 
-    displayResults(filteredRules, selectedChapter, query);
+    // Sort matching relevance metrics: floating title matches to the absolute top of layout
+    if (queryInput !== "") {
+        filteredRules.sort((a, b) => {
+            const aHit = a.title.toLowerCase().includes(queryInput) || a.id.includes(queryInput);
+            const bHit = b.title.toLowerCase().includes(queryInput) || b.id.includes(queryInput);
+            if (aHit && !bHit) return -1;
+            if (!aHit && bHit) return 1;
+            return 0;
+        });
+    }
+
+    displayResults(filteredRules, selectedChapter, queryInput);
 }
 
 function performSearch() {
@@ -144,33 +244,16 @@ function performSearch() {
 function filterChapter() {
     const selector = document.getElementById('chapterSelector');
     const selectedChapter = selector.value;
-
     applyFilters();
 
     if (selectedChapter !== "") {
         requestAnimationFrame(() => {
-            const chapterHeader = document.querySelector(
-                `.chapter-header[data-chapter="${selectedChapter}"]`
-            );
-
+            const chapterHeader = document.querySelector(`.chapter-header[data-chapter="${selectedChapter}"]`);
+            const stickyHeader = document.querySelector('.sticky-header-wrapper');
             if (chapterHeader) {
-                const stickyHeader = document.querySelector(
-                    '.sticky-header-wrapper'
-                );
-
-                const offset = stickyHeader
-                    ? stickyHeader.getBoundingClientRect().height + 12
-                    : 12;
-
-                const headerPosition =
-                    chapterHeader.getBoundingClientRect().top +
-                    window.pageYOffset -
-                    offset;
-
-                window.scrollTo({
-                    top: Math.max(0, headerPosition),
-                    behavior: "smooth"
-                });
+                const offset = stickyHeader ? stickyHeader.offsetHeight : 60;
+                const topTarget = chapterHeader.getBoundingClientRect().top + window.scrollY - offset;
+                window.scrollTo({ top: topTarget, behavior: 'smooth' });
             }
         });
     }
@@ -179,6 +262,7 @@ function filterChapter() {
 function toggleBookmarkFilter() {
     showOnlyBookmarks = !showOnlyBookmarks;
     const btn = document.getElementById('bookmarkToggleBtn');
+    if (!btn) return;
     
     if (showOnlyBookmarks) {
         btn.innerText = "⭐ Showing Saved";
@@ -192,19 +276,14 @@ function toggleBookmarkFilter() {
     applyFilters();
 }
 
-// Toggles bookmarks on individual rule cards and updates phone storage memory
 function toggleBookmark(ruleId) {
     const index = bookmarkedRuleIds.indexOf(ruleId);
     if (index > -1) {
-        bookmarkedRuleIds.splice(index, 1); // Remove if already bookmarked
+        bookmarkedRuleIds.splice(index, 1);
     } else {
-        bookmarkedRuleIds.push(ruleId); // Add if new bookmark
+        bookmarkedRuleIds.push(ruleId);
     }
-    
-    // Save string database state to device memory layer
     localStorage.setItem('barryPSR_bookmarks', JSON.stringify(bookmarkedRuleIds));
-    
-    // Re-apply filters to update card UI state dynamically
     applyFilters();
 }
 
@@ -214,16 +293,22 @@ function clearFilter() {
     showOnlyBookmarks = false;
     
     const btn = document.getElementById('bookmarkToggleBtn');
-    btn.innerText = "⭐ Bookmarks";
-    btn.style.background = "#fef3c7";
-    btn.style.color = "#92400e";
-    
+    if (btn) {
+        btn.style.background = "";
+        btn.style.color = "";
+        btn.innerText = "⭐ Bookmarks";
+    }
     applyFilters();
 }
-
+// ============================================================
+// UI DOM CARD INJECTION RENDER SYSTEM
+// ============================================================
 function displayResults(rulesList, selectedChapter, activeQuery) {
-    const resultsContainer = document.getElementById('searchResults');
+    // Matched specifically to id="resultsContainer" inside your HTML file
+    const resultsContainer = document.getElementById('resultsContainer');
     const countContainer = document.getElementById('resultsCount');
+    
+    if (!resultsContainer || !countContainer) return;
     
     resultsContainer.innerHTML = "";
     countContainer.innerText = `Found ${rulesList.length} rule(s)`;
@@ -246,7 +331,7 @@ function displayResults(rulesList, selectedChapter, activeQuery) {
         "15": "INNOVATIONS AND INVENTIONS",
         "16": "COMPENSATION AND INSURANCE",
         "17": "APPLICATION OF THE PUBLIC SERVICE RULES TO FEDERAL GOVERNMENT PARASTATALS",
-        "18": "REGULATIONS AND APPENDIX",
+        "18": "REGULATIONS AND APPENDIX"
     };
 
     let lastRenderedChapter = null;
@@ -263,8 +348,8 @@ function displayResults(rulesList, selectedChapter, activeQuery) {
     rulesList.forEach(rule => {
         if (rule.chapter !== lastRenderedChapter) {
             const bigBanner = document.createElement('div');
-            bigBanner.className = "chapter-header";
-bigBanner.dataset.chapter = rule.chapter;
+            bigBanner.className = 'chapter-header';
+            bigBanner.setAttribute('data-chapter', rule.chapter);
             bigBanner.style.background = "#e6f4ea";
             bigBanner.style.color = "#008751";
             bigBanner.style.padding = "12px 16px";
@@ -274,7 +359,6 @@ bigBanner.dataset.chapter = rule.chapter;
             bigBanner.style.marginTop = "25px";
             bigBanner.style.marginBottom = "10px";
             bigBanner.style.borderLeft = "6px solid #008751";
-            bigBanner.style.letterSpacing = "0.5px";
             bigBanner.innerText = `CHAPTER ${rule.chapter}: ${chapterTitles[rule.chapter] || 'PUBLIC SERVICE PROTOCOL'}`;
             resultsContainer.appendChild(bigBanner);
             
@@ -303,11 +387,17 @@ bigBanner.dataset.chapter = rule.chapter;
         
         let finalContent = rule.content;
         if (activeQuery !== "") {
-            const regex = new RegExp(`(${escapeRegExp(activeQuery)})`, 'gi');
-            finalContent = rule.content.replace(regex, `<mark style="background: #ffeb3b; padding: 0 2px; border-radius: 2px;">$1</mark>`);
+            const cleanHighlightInput = activeQuery.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()'"?[\]\\]/g, " ");
+            const highlightTokens = cleanHighlightInput.split(/\s+/).filter(t => t.length >= 3);
+            
+            highlightTokens.forEach(token => {
+                try {
+                    const regex = new RegExp(`(${escapeRegExp(token)})`, 'gi');
+                    finalContent = finalContent.replace(regex, `<mark style="background: #ffeb3b; padding: 0 2px; border-radius: 2px;">$1</mark>`);
+                } catch(e) {}
+            });
         }
         
-        // Determine whether this card is currently starred
         const isStarred = bookmarkedRuleIds.includes(rule.id);
         const starIcon = isStarred ? "★" : "☆";
         const starColor = isStarred ? "#b45309" : "#a1a1aa";
@@ -316,11 +406,7 @@ bigBanner.dataset.chapter = rule.chapter;
             <div class="rule-header">
                 <span class="rule-id">PSR-${rule.id}</span>
                 <h3 class="rule-title">${rule.title}</h3>
-                <!-- Interactive bookmark tap target icon button -->
-                <button 
-                    onclick="toggleBookmark('${rule.id}')" 
-                    style="background: none; border: none; font-size: 1.4rem; color: ${starColor}; cursor: pointer; padding-left: 10px;"
-                >
+                <button onclick="toggleBookmark('${rule.id}')" style="background: none; border: none; font-size: 1.4rem; color: ${starColor}; cursor: pointer; padding-left: 10px;">
                     ${starIcon}
                 </button>
             </div>
@@ -332,11 +418,6 @@ bigBanner.dataset.chapter = rule.chapter;
         resultsContainer.appendChild(card);
     });
 }
-
-function escapeRegExp(string) {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 
 // ANDROID HARDWARE BACK BUTTON
 document.addEventListener("backbutton", function (event) {

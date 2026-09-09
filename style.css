@@ -42,15 +42,11 @@ header p {
 main {
     padding: 15px;
 }
-    
-    
-
-
 
 #searchInput {
     width: 100%;
-    padding: 14px 16px;
-    font-size: 1rem;
+    padding: 12px 14px;
+    font-size: 0.95rem;
     border: 2px solid #ddd;
     border-radius: 8px;
     outline: none;
@@ -61,6 +57,19 @@ main {
 
 #searchInput:focus {
     border-color: var(--primary-color);
+}
+
+.search-container {
+    margin-bottom: 6px;
+}
+
+.quick-filters {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
 }
 
 .quick-filters button {
@@ -75,10 +84,44 @@ main {
     cursor: pointer;
 }
 
+#chapterSelector {
+    padding: 8px 6px 8px 12px;
+    border-radius: 20px; 
+    background: #e2e8f0; 
+    border: none; 
+    font-weight: 600; 
+    color: #4a5568; 
+    outline: none;
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-align: center;
+    text-align-last: center;
+    width: 140px;               
+    text-overflow: ellipsis;    
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sticky-header-wrapper {
+    position: sticky;
+    top: 0;
+    background-color: var(--background-color);
+    padding: 8px 0 6px 0;
+    z-index: 100;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.sticky-header-wrapper button, 
+#chapterSelector {
+    font-size: 0.88rem !important;
+    padding: 6px 10px !important; 
+}
+
 .results-count {
     font-size: 0.85rem;
     color: var(--text-muted);
-    margin-bottom: 10px;
+    margin-top: 8px;
+    margin-bottom: 6px;
     padding-left: 4px;
 }
 
@@ -88,6 +131,7 @@ main {
     gap: 12px;
 }
 
+/* Rule Card Styling */
 .rule-card {
     background-color: var(--card-background);
     padding: 16px;
@@ -103,389 +147,205 @@ main {
     margin-bottom: 8px;
 }
 
+.rule-badge,
 .rule-id {
     background-color: #e6f4ea;
     color: var(--primary-color);
-    padding: 2px 6px;
+    padding: 2px 8px;
     border-radius: 4px;
     font-size: 0.8rem;
     font-weight: 700;
+}
+
+.bookmark-btn {
+    background: transparent;
+    border: 1px solid #d1d5db;
+    color: #4b5563;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.bookmark-btn.active {
+    background-color: #fef3c7;
+    border-color: #f59e0b;
+    color: #92400e;
 }
 
 .rule-title {
     font-size: 1rem;
     font-weight: 600;
     color: #1a202c;
-    flex: 1;
-    margin-left: 8px;
+    margin-bottom: 4px;
+}
+
+.rule-meta {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    font-weight: 500;
 }
 
 .rule-content {
     font-size: 0.9rem;
     line-height: 1.5;
     color: #4a5568;
-    white-space: pre-wrap; /* This instructs the browser layout to respect paragraph line breaks (\n\n) */
+    white-space: pre-wrap;
 }
-
-/* Layout Polish Extension for Form Integration */
-#chapterSelector {
-    padding: 8px 6px 8px 12px; /* Adjusted to balance the dropdown arrow offset */
-    border-radius: 20px; 
-    background: #e2e8f0; 
-    border: none; 
-    font-weight: 600; 
-    color: #4a5568; 
-    outline: none;
-    font-size: 0.85rem;
-    cursor: pointer;
-    
-    /* Center the placeholder content */
-    text-align: center;
-    text-align-last: center; /* Forces phone browsers to center the selected active item text */
-    
-    /* Hard sizing rules to override long options */
-    width: 140px;               
-    text-overflow: ellipsis;    
-    white-space: nowrap;
-    overflow: hidden;
-}
-
-
-
-.quick-filters {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    overflow-x: auto; /* Allows you to swipe left/right across buttons if they get too wide */
-    padding-bottom: 4px;
-    -webkit-overflow-scrolling: touch; /* Makes sliding smooth on your Tecno touch screen */
-}
-
 
 mark {
-    color: inherit;
+    background-color: #fef08a;
+    color: #854d0e;
+    padding: 1px 4px;
+    border-radius: 3px;
 }
 
-/* Compact Sticky Controls Wrapper */
-.sticky-header-wrapper {
-    position: sticky;
-    top: 0;
-    background-color: var(--background-color);
-    padding: 8px 0 6px 0; /* Reduced top and bottom padding */
-    z-index: 100;
-    border-bottom: 1px solid #e2e8f0;
-}
-
-/* Reset search container properties */
-.search-container {
-    margin-bottom: 6px; /* Reduced gap under search bar */
-}
-
-/* Tighten the results count placement */
-.results-count {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    margin-top: 8px; /* Pulled the content closer to the sticky line */
-    margin-bottom: 6px; /* Reduced gap before the rule cards start */
-    padding-left: 4px;
-}
-
-/* Custom Compact Font Scale for Sticky Header Controls */
-.sticky-header-wrapper button, 
-#chapterSelector {
-    font-size: 0.92rem !important; /* Slightly reduced from 0.85rem for a sharper mobile fit */
-    padding: 6px 10px !important;  /* Tighter padding to shrink the button boxes */
-}
-
-/* =========================================
-   PSR TUTOR — IN-APP SPLASH SCREEN
-   ========================================= */
-
+/* PSR TUTOR — IN-APP SPLASH SCREEN */
 .splash-overlay {
     position: fixed;
     inset: 0;
     width: 100%;
     min-height: 100dvh;
     box-sizing: border-box;
-
     background: #1a1f2c;
-
     display: flex;
     justify-content: center;
     align-items: center;
-
-    padding:
-        max(24px, env(safe-area-inset-top))
-        24px
-        max(24px, env(safe-area-inset-bottom));
-
+    padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
     z-index: 9999;
-
     opacity: 1;
     visibility: visible;
-
-    transition:
-    opacity 0.7s ease-in-out,
-    visibility 0.7s ease-in-out;
+    transition: opacity 0.7s ease-in-out, visibility 0.7s ease-in-out;
 }
-
-/* Smooth exit animation for splash contents */
 
 .splash-branding-box {
-    transition:
-        opacity 0.55s ease,
-        transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.55s ease, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    width: min(86vw, 360px);
+    text-align: center;
 }
-
-
-/* When the splash disappears, gently move the
-   branding backwards while fading it out */
 
 .splash-hidden-state .splash-branding-box {
     opacity: 0;
     transform: scale(0.97) translateY(-8px);
 }
 
-/* Main splash content */
-.splash-branding-box {
-    width: min(86vw, 360px);
-    text-align: center;
-}
-
-
-/* Logo */
-
 .splash-logo-wrap {
     width: clamp(145px, 42vw, 190px);
     aspect-ratio: 1;
-
     margin: 0 auto 24px;
-
     border-radius: 28px;
     overflow: hidden;
-
     background: #ffffff;
-
-    box-shadow:
-        0 18px 50px rgba(0, 0, 0, 0.30);
-
-    animation:
-        splashLogoIn
-        0.22s
-        cubic-bezier(0.16, 1, 0.3, 1)
-        both;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.30);
+    animation: splashLogoIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
-
 
 .splash-logo {
     display: block;
-
     width: 100%;
     height: 100%;
-
     object-fit: contain;
 }
 
-
-/* Logo entrance */
-
 @keyframes splashLogoIn {
-
     from {
         opacity: 0.25;
         transform: scale(0.96);
     }
-
     to {
         opacity: 1;
         transform: scale(1);
     }
-
 }
-
-
-/* Main title */
 
 .splash-main-title {
     font-size: clamp(1.45rem, 6vw, 1.8rem);
-
     line-height: 1.15;
-
     font-weight: 800;
-
     color: #ffffff;
-
     margin: 0 0 7px;
-
     letter-spacing: 0.3px;
-
     opacity: 0;
-
     transform: translateY(10px);
-
-    animation:
-        splashTextIn
-        0.35s
-        0.22s
-        cubic-bezier(0.16, 1, 0.3, 1)
-        forwards;
+    animation: splashTextIn 0.35s 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-
-
-/* Subtitle */
 
 .splash-subtitle {
     font-size: 0.88rem;
-
     line-height: 1.4;
-
     color: #d5dbe5;
-
     margin: 0;
-
     opacity: 0;
-
     transform: translateY(8px);
-
-    animation:
-        splashTextIn
-        0.35s
-        0.36s
-        cubic-bezier(0.16, 1, 0.3, 1)
-        forwards;
+    animation: splashTextIn 0.35s 0.36s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-
-
-/* Designer credit */
 
 .splash-credits-text {
     font-size: 0.76rem;
-
     font-weight: 500;
-
     color: #9da8b8;
-
     margin: 11px 0 0;
-
     letter-spacing: 0.7px;
-
     opacity: 0;
-
     transform: translateY(8px);
-
-    animation:
-        splashTextIn
-        0.35s
-        0.50s
-        cubic-bezier(0.16, 1, 0.3, 1)
-        forwards;
+    animation: splashTextIn 0.35s 0.50s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-
-/* Text entrance */
-
 @keyframes splashTextIn {
-
     to {
         opacity: 1;
         transform: translateY(0);
     }
-
 }
-
-
-/* Loading bar */
 
 .splash-progress {
     width: 92px;
     height: 3px;
-
     margin: 27px auto 9px;
-
     border-radius: 999px;
-
     background: rgba(255, 255, 255, 0.12);
-
     overflow: hidden;
-
     opacity: 0;
-
-    animation:
-        splashTextIn
-        0.4s
-        0.65s
-        forwards;
+    animation: splashTextIn 0.4s 0.65s forwards;
 }
-
 
 .splash-progress span {
     display: block;
-
     width: 42%;
     height: 100%;
-
     border-radius: inherit;
-
     background: #00a86b;
-
-    animation:
-        splashProgress
-        1.25s
-        ease-in-out
-        infinite;
+    animation: splashProgress 1.25s ease-in-out infinite;
 }
 
-
-/* Moving loading indicator */
-
 @keyframes splashProgress {
-
     0% {
         transform: translateX(-120%);
     }
-
     100% {
         transform: translateX(340%);
     }
-
 }
-
-
-/* Loading text */
 
 .splash-loading-text {
     font-size: 0.68rem;
-
     color: #7f8b9d;
-
     margin: 0;
-
     letter-spacing: 0.5px;
-
     opacity: 0;
-
-    animation:
-        splashTextIn
-        0.4s
-        0.72s
-        forwards;
+    animation: splashTextIn 0.4s 0.72s forwards;
 }
-
-
-/* Hide splash */
 
 .splash-hidden-state {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
 }
 
-
-/* Accessibility:
-   Reduce animation for users who prefer less motion */
-
 @media (prefers-reduced-motion: reduce) {
-
     .splash-logo-wrap,
     .splash-main-title,
     .splash-subtitle,
@@ -504,5 +364,4 @@ mark {
         opacity: 1;
         transform: none;
     }
-
 }
