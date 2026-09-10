@@ -516,7 +516,7 @@ function checkAppLicenseStatus() {
     if (whatsappLink) {
         const myPhoneNumber = "2348052538349"; 
         const txtMessage = encodeURIComponent(`Hello Engr Udu, I want to activate premium access for my PSR Tutor App. My Unique Request Code is: ${requestCode}`);
-        const completeUrl = "https://whatsapp.com" + myPhoneNumber + "&text=" + txtMessage;
+        const completeUrl = "https://wa.me/" + myPhoneNumber + "?text=" + txtMessage;
 
         // FIX: Override standard click behavior to force an Android system handoff
         whatsappLink.onclick = function(e) {
@@ -571,12 +571,15 @@ function launchWhatsAppOrderingIntents() {
     const seedCode = generateDeviceFingerprint();
     const requestCode = `PSR-${seedCode}-UDU`;
     const myPhoneNumber = "2348052538349";
-    const txtMessage = encodeURIComponent(`Hello Engr Udu, I want to activate premium access for my PSR Tutor App. My Request Code is: ${requestCode}`);
-    const completeUrl = "https://whatsapp.com" + myPhoneNumber + "&text=" + txtMessage;
 
-    console.log("Triggering WhatsApp external system handoff linking...");
+    const txtMessage = encodeURIComponent(
+        `Hello Engr Udu, I want to activate premium access for my PSR Tutor App. My Request Code is: ${requestCode}`
+    );
 
-    // Forces a clean Android device platform app intent launch
+    const completeUrl = "https://wa.me/" + myPhoneNumber + "?text=" + txtMessage;
+
+    console.log("Opening WhatsApp:", completeUrl);
+
     if (window.cordova && window.cordova.InAppBrowser) {
         window.cordova.InAppBrowser.open(completeUrl, '_system');
     } else if (typeof cordova !== 'undefined' && cordova.InAppBrowser) {
