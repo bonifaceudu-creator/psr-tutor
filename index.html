@@ -116,9 +116,15 @@
                 <button onclick="validateLicenseKey()" class="activate-btn">Activate Lifetime Access</button>
             </div>
 
-            <a id="whatsappPurchaseLink" href="#" target="_blank" class="whatsapp-btn">
+                        <!-- CORRECTION: Replaced standard href link behavior with a direct inline onclick handler function -->
+            <button 
+                id="whatsappPurchaseLink" 
+                onclick="launchWhatsAppOrderingIntents()" 
+                style="display: block; width: 100%; background: #25d366; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; text-align: center; cursor: pointer; box-sizing: border-box; text-decoration: none; margin-top: 10px;"
+            >
                 💬 Order Key via WhatsApp
-            </a>
+            </button>
+
             
             <p class="lock-footer">Designed by Engr Udu | 100% Pass Guarantee</p>
         </div>

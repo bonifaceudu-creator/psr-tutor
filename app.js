@@ -511,7 +511,7 @@ function checkAppLicenseStatus() {
     const codeDisplay = document.getElementById('deviceRequestCode');
     if (codeDisplay) codeDisplay.innerText = requestCode;
 
-            //    // Dynamically compile a click-to-chat WhatsApp link targeting your number
+                // Dynamically compile a click-to-chat WhatsApp link targeting your number
     const whatsappLink = document.getElementById('whatsappPurchaseLink');
     if (whatsappLink) {
         const myPhoneNumber = "2348052538349"; 
@@ -519,11 +519,8 @@ function checkAppLicenseStatus() {
         const completeUrl = "https://whatsapp.com" + myPhoneNumber + "&text=" + txtMessage;
 
         // FIX: Override standard click behavior to force an Android system handoff
-                // Force an Android system handoff to bypass security blocks completely
         whatsappLink.onclick = function(e) {
-            e.preventDefault(); 
-            
-            // Checks for Cordova's native wrapper plugin explicitly
+            e.preventDefault(); // Stop the app from trying to load the link inside the webview canvas
             if (window.cordova && window.cordova.InAppBrowser) {
                 window.cordova.InAppBrowser.open(completeUrl, '_system');
             } else {
@@ -531,8 +528,8 @@ function checkAppLicenseStatus() {
             }
             return false;
         };
-;
     }
+
 
 
 
@@ -563,5 +560,28 @@ function validateLicenseKey() {
         }
     } else {
         alert("❌ Invalid Activation Key! Please double-check your text or contact Engr Udu on WhatsApp.");
+    }
+}
+
+
+// ============================================================
+// 🚀 BULLETPROOF UNIVERSAL WHATSAPP LAUNCH ENGINE
+// ============================================================
+function launchWhatsAppOrderingIntents() {
+    const seedCode = generateDeviceFingerprint();
+    const requestCode = `PSR-${seedCode}-UDU`;
+    const myPhoneNumber = "2348052538349";
+    const txtMessage = encodeURIComponent(`Hello Engr Udu, I want to activate premium access for my PSR Tutor App. My Request Code is: ${requestCode}`);
+    const completeUrl = "https://whatsapp.com" + myPhoneNumber + "&text=" + txtMessage;
+
+    console.log("Triggering WhatsApp external system handoff linking...");
+
+    // Forces a clean Android device platform app intent launch
+    if (window.cordova && window.cordova.InAppBrowser) {
+        window.cordova.InAppBrowser.open(completeUrl, '_system');
+    } else if (typeof cordova !== 'undefined' && cordova.InAppBrowser) {
+        cordova.InAppBrowser.open(completeUrl, '_system');
+    } else {
+        window.open(completeUrl, '_system');
     }
 }
