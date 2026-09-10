@@ -519,8 +519,11 @@ function checkAppLicenseStatus() {
         const completeUrl = "https://whatsapp.com" + myPhoneNumber + "&text=" + txtMessage;
 
         // FIX: Override standard click behavior to force an Android system handoff
+                // Force an Android system handoff to bypass security blocks completely
         whatsappLink.onclick = function(e) {
-            e.preventDefault(); // Stop the app from trying to load the link inside the webview canvas
+            e.preventDefault(); 
+            
+            // Checks for Cordova's native wrapper plugin explicitly
             if (window.cordova && window.cordova.InAppBrowser) {
                 window.cordova.InAppBrowser.open(completeUrl, '_system');
             } else {
@@ -528,6 +531,7 @@ function checkAppLicenseStatus() {
             }
             return false;
         };
+;
     }
 
 
