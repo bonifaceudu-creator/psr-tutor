@@ -519,15 +519,7 @@ function checkAppLicenseStatus() {
         const completeUrl = "https://wa.me/" + myPhoneNumber + "?text=" + txtMessage;
 
         // FIX: Override standard click behavior to force an Android system handoff
-        whatsappLink.onclick = function(e) {
-            e.preventDefault(); // Stop the app from trying to load the link inside the webview canvas
-            if (window.cordova && window.cordova.InAppBrowser) {
-                window.cordova.InAppBrowser.open(completeUrl, '_system');
-            } else {
-                window.open(completeUrl, '_system');
-            }
-            return false;
-        };
+        
     }
 
 
@@ -572,19 +564,18 @@ function launchWhatsAppOrderingIntents() {
     const requestCode = `PSR-${seedCode}-UDU`;
     const myPhoneNumber = "2348052538349";
 
-    const txtMessage = encodeURIComponent(
-        `Hello Engr Udu, I want to activate premium access for my PSR Tutor App. My Request Code is: ${requestCode}`
-    );
+    const message =
+        `Hello Engr Udu, I want to activate premium access for my PSR Tutor App. ` +
+        `My Unique Request Code is: ${requestCode}`;
 
-    const completeUrl = "https://wa.me/" + myPhoneNumber + "?text=" + txtMessage;
+    const completeUrl =
+        "https://api.whatsapp.com/send?phone=" +
+        myPhoneNumber +
+        "&text=" +
+        encodeURIComponent(message);
 
     console.log("Opening WhatsApp:", completeUrl);
 
-    if (window.cordova && window.cordova.InAppBrowser) {
-        window.cordova.InAppBrowser.open(completeUrl, '_system');
-    } else if (typeof cordova !== 'undefined' && cordova.InAppBrowser) {
-        cordova.InAppBrowser.open(completeUrl, '_system');
-    } else {
-        window.open(completeUrl, '_system');
-    }
+    // Navigate directly instead of creating a second browser page
+    window.location.href = completeUrl;
 }
