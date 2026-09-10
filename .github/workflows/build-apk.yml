@@ -46,13 +46,17 @@ jobs:
     - name: Restore Project Dependencies
       run: npm install
 
-    - name: Add Android App Compilation Layer
-      run: |
-        cordova platform add android --no-telemetry
-        cordova plugin add cordova-plugin-exitapp
+        - name: Add Android App Compilation Layer
+      run: cordova platform add android --no-telemetry
+
+    # 🚀 PASTE THIS NEW PLUGIN ACCELERATOR LINE EXACTLY HERE:
+    - name: Inject System Webview Handoff Plugin
+      run: cordova plugin add cordova-plugin-inappbrowser --no-telemetry
+    # ========================================================
 
     - name: Compile Debug APK Build
       run: cordova build android --debug --no-telemetry
+
 
     - name: Upload Finished APK Asset
       uses: actions/upload-artifact@v4
