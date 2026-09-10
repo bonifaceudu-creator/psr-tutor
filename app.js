@@ -511,16 +511,25 @@ function checkAppLicenseStatus() {
     const codeDisplay = document.getElementById('deviceRequestCode');
     if (codeDisplay) codeDisplay.innerText = requestCode;
 
-            // Dynamically compile a click-to-chat WhatsApp link targeting your number
+            //    // Dynamically compile a click-to-chat WhatsApp link targeting your number
     const whatsappLink = document.getElementById('whatsappPurchaseLink');
     if (whatsappLink) {
-        // Your official active public service tutor business line
         const myPhoneNumber = "2348052538349"; 
         const txtMessage = encodeURIComponent(`Hello Engr Udu, I want to activate premium access for my PSR Tutor App. My Unique Request Code is: ${requestCode}`);
-        
-        // CORRECTION: Swapped to the official API intent path with explicit formatting parameters
-        whatsappLink.href = "https://whatsapp.com" + myPhoneNumber + "&text=" + txtMessage;
+        const completeUrl = "https://whatsapp.com" + myPhoneNumber + "&text=" + txtMessage;
+
+        // FIX: Override standard click behavior to force an Android system handoff
+        whatsappLink.onclick = function(e) {
+            e.preventDefault(); // Stop the app from trying to load the link inside the webview canvas
+            if (window.cordova && window.cordova.InAppBrowser) {
+                window.cordova.InAppBrowser.open(completeUrl, '_system');
+            } else {
+                window.open(completeUrl, '_system');
+            }
+            return false;
+        };
     }
+
 
 
 
