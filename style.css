@@ -365,3 +365,139 @@ mark {
         transform: none;
     }
 }
+
+/* Premium Security Lock Overlay UI */
+.lock-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: #1a1f2c; /* Matches your premium soft dark splash theme */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999; /* Sits above absolutely everything, including sticky headers */
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.lock-card {
+    background: #242b3d;
+    width: 100%;
+    max-width: 360px;
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.lock-icon-wrap {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+}
+
+.lock-card h2 {
+    color: #ffffff;
+    font-size: 1.3rem;
+    margin: 0 0 10px 0;
+    font-weight: 700;
+}
+
+.lock-pitch {
+    color: #a0aec0;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin: 0 0 16px 0;
+}
+
+.price-badge {
+    display: inline-block;
+    background: #00a86b; /* Institutional green badge */
+    color: #ffffff;
+    font-weight: 700;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+}
+
+.code-box {
+    background: #1a1f2c;
+    border: 1px dashed #4a5568;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.code-label {
+    display: block;
+    color: #718096;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.request-code-text {
+    color: #ecc94b; /* Vibrant code color text */
+    font-family: monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.input-group {
+    margin-bottom: 14px;
+}
+
+.lock-input {
+    width: 100%;
+    background: #1a1f2c;
+    border: 1px solid #4a5568;
+    color: #ffffff;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    text-align: center;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+    outline: none;
+}
+
+.lock-input:focus {
+    border-color: #00a86b;
+}
+
+.activate-btn {
+    width: 100%;
+    background: #00a86b;
+    color: #ffffff;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.activate-btn:hover {
+    background: #008751;
+}
+
+.whatsapp-btn {
+    display: block;
+    background: #25d366; /* Official WhatsApp Green color */
+    color: #ffffff;
+    text-decoration: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+}
+
+.lock-footer {
+    color: #4a5568;
+    font-size: 0.7rem;
+    margin: 16px 0 0 0;
+    font-weight: 600;
+}

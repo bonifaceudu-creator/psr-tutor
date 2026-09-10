@@ -108,6 +108,8 @@ function hideAppSplash() {
 // APP INITIALIZATION
 // ============================================================
 document.addEventListener("DOMContentLoaded", function() {
+ localStorage.removeItem('barryPSR_premium_unlocked');
+ 
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('input', performSearch);
@@ -123,8 +125,15 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // Fetch the raw rules JSON data file
+    // ============================================================
+    // 🔒 INITIALIZE PREMIUM SECURITY CHECK ENGINE
+    // ============================================================
+    checkAppLicenseStatus();
+    // ============================================================
+
+    // Fetch the raw rules JSON file
     fetch('psr_data.json')
+
         .then(response => {
             if (!response.ok) {
                 throw new Error(`Database file missing or failed to fetch: ${response.status}`);
@@ -243,21 +252,42 @@ function performSearch() {
 
 function filterChapter() {
     const selector = document.getElementById('chapterSelector');
+    const searchInput = document.getElementById('searchInput');
     const selectedChapter = selector.value;
-    applyFilters();
 
     if (selectedChapter !== "") {
-        requestAnimationFrame(() => {
+        // 1. Reset text inputs so the entire book layout renders for coordinate calculation
+        if (searchInput) searchInput.value = "";
+        showOnlyBookmarks = false;
+        
+        // 2. Temporarily reset the selector value to empty so applyFilters() prints the FULL book
+        selector.value = "";
+        applyFilters();
+        
+        // 3. Restore the selector value on the UI element
+        selector.value = selectedChapter;
+
+        // 4. Smoothly glide the phone viewport down to the target chapter banner
+        setTimeout(() => {
             const chapterHeader = document.querySelector(`.chapter-header[data-chapter="${selectedChapter}"]`);
             const stickyHeader = document.querySelector('.sticky-header-wrapper');
+            
             if (chapterHeader) {
                 const offset = stickyHeader ? stickyHeader.offsetHeight : 60;
-                const topTarget = chapterHeader.getBoundingClientRect().top + window.scrollY - offset;
-                window.scrollTo({ top: topTarget, behavior: 'smooth' });
+                const targetY = chapterHeader.getBoundingClientRect().top + window.scrollY - offset - 10;
+                
+                window.scrollTo({ 
+                    top: targetY, 
+                    behavior: 'smooth' 
+                });
             }
-        });
+        }, 80);
+    } else {
+        applyFilters();
     }
 }
+
+
 
 function toggleBookmarkFilter() {
     showOnlyBookmarks = !showOnlyBookmarks;
@@ -445,3 +475,80 @@ document.addEventListener("backbutton", function (event) {
         navigator.app.exitApp();
     }
 }, false);
+
+
+// ============================================================
+// 🔒 OFFLINE DEVICE LOCK & ACTIVATION KEY ENGINE
+// ============================================================
+
+// Secret Math Factor Core Definition: Change this multiplier value to whatever number you like!
+const ENGR_UDU_SECRET_SALT = 8423; 
+
+function generateDeviceFingerprint() {
+    // Collect specific browser agent layout criteria metrics to build a local device footprint
+    const signature = navigator.userAgent + (navigator.languages ? navigator.languages.join('') : 'en');
+    let hash = 0;
+    for (let i = 0; i < signature.length; i++) {
+        hash = (hash << 5) - hash + signature.charCodeAt(i);
+        hash |= 0; // Forces computation into a clean native 32bit integer block
+    }
+    return Math.abs(hash % 9000) + 1000; // Guarantees a clean 4-digit unique integer seed
+}
+
+function checkAppLicenseStatus() {
+    const isActivated = localStorage.getItem('barryPSR_premium_unlocked');
+    
+    // If the device footprint signature is already successfully validated, kill execution and proceed
+    if (isActivated === "true") {
+        return;
+    }
+
+    // Generate hardware footprint seeds
+    const seedCode = generateDeviceFingerprint();
+    const requestCode = `PSR-${seedCode}-UDU`;
+    
+    // Inject parameters safely into structural overlay interface targets
+    const codeDisplay = document.getElementById('deviceRequestCode');
+    if (codeDisplay) codeDisplay.innerText = requestCode;
+
+            // Dynamically compile a click-to-chat WhatsApp link targeting your number
+    const whatsappLink = document.getElementById('whatsappPurchaseLink');
+    if (whatsappLink) {
+        // Your official active public service tutor business line
+        const myPhoneNumber = "2348052538349"; 
+        const txtMessage = encodeURIComponent(`Hello Engr Udu, I want to activate premium access for my PSR Tutor App. My Unique Request Code is: ${requestCode}`);
+        
+        // CORRECTION: Swapped to the official API intent path with explicit formatting parameters
+        whatsappLink.href = "https://whatsapp.com" + myPhoneNumber + "&text=" + txtMessage;
+    }
+
+
+
+    // Drop authority layer blinds: unhide security lock screen instantly
+    const lockOverlay = document.getElementById('activationLockOverlay');
+    if (lockOverlay) {
+        lockOverlay.classList.remove('splash-hidden-state');
+    }
+}
+
+function validateLicenseKey() {
+    const userInput = document.getElementById('activationKeyInput').value.trim();
+    const seedCode = generateDeviceFingerprint();
+    
+    // --- THE SECRET FORMULA ---
+    // The correct mathematical activation key calculation sequence requirement
+    const expectedCorrectKey = `KEY-${seedCode * ENGR_UDU_SECRET_SALT}-XYZ`;
+
+    if (userInput === expectedCorrectKey) {
+        localStorage.setItem('barryPSR_premium_unlocked', "true");
+        alert("🎉 Premium Lifetime Access successfully activated! Thank you for supporting Engr Udu.");
+        
+        // Hide the security overlay screen completely
+        const lockOverlay = document.getElementById('activationLockOverlay');
+        if (lockOverlay) {
+            lockOverlay.classList.add('splash-hidden-state');
+        }
+    } else {
+        alert("❌ Invalid Activation Key! Please double-check your text or contact Engr Udu on WhatsApp.");
+    }
+}

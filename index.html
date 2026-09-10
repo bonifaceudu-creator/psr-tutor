@@ -90,6 +90,41 @@
         <!-- Search Results Count and List Containers -->
         <div id="resultsCount" class="results-count"></div>
         <div id="resultsContainer" class="results-list"></div>
+            <!-- Premium Activation Security Lock Overlay -->
+    <div id="activationLockOverlay" class="lock-overlay splash-hidden-state">
+        <div class="lock-card">
+            <div class="lock-icon-wrap">🔒</div>
+            <h2>Premium Activation Required</h2>
+            <p class="lock-pitch">
+                Unlock full lifetime access to <strong>All 18 Chapters</strong> and <strong>Powerful Search Engine </strong>
+            </p>
+            
+            <div class="price-badge">₦2,500 Only</div>
+
+            <div class="code-box">
+                <span class="code-label">YOUR UNIQUE REQUEST CODE:</span>
+                <div id="deviceRequestCode" class="request-code-text">PSR-0000-UDU</div>
+            </div>
+
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="activationKeyInput" 
+                    placeholder="Enter Activation Key here..." 
+                    class="lock-input"
+                >
+                <button onclick="validateLicenseKey()" class="activate-btn">Activate Lifetime Access</button>
+            </div>
+
+            <a id="whatsappPurchaseLink" href="#" target="_blank" class="whatsapp-btn">
+                💬 Order Key via WhatsApp
+            </a>
+            
+            <p class="lock-footer">Designed by Engr Udu | 100% Pass Guarantee</p>
+        </div>
+    </div>
+
+        
     </main>
 
 <script>

@@ -18,16 +18,18 @@
         Barry Dev
     </author>
 
-    <content src="index.html" />
-
+       <content src="index.html" />
     <access origin="*" />
-
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />
+    
+    <!-- 🚀 ADD THIS EXTENSION LINE TO BYPASS THE BLOCKED BLINDS: -->
+    <allow-intent href="whatsapp:*" />
+    <allow-intent href="https://whatsapp.com*" />
+    <!-- ======================================================== -->
+    
+    <preference name="Orientation" value="portrait" />
 
-    <preference
-        name="Orientation"
-        value="portrait" />
 
     <!-- Android native splash -->
     <preference
