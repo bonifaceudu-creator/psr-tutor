@@ -46,7 +46,7 @@ jobs:
     - name: Restore Project Dependencies
       run: npm install
 
-    - name: Add Android App Compilation Layer
+        - name: Add Android App Compilation Layer
       run: cordova platform add android --no-telemetry
 
     # 🚀 PASTE THIS NEW PLUGIN ACCELERATOR LINE EXACTLY HERE:
