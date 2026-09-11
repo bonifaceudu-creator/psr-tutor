@@ -2,6 +2,7 @@
 let publicServiceRules = [];
 let bookmarkedRuleIds = [];
 let showOnlyBookmarks = false;
+let bookmarkDetailRuleId = null;
 
 // Fast search index variables
 let searchIndex = [];
@@ -108,8 +109,7 @@ function hideAppSplash() {
 // APP INITIALIZATION
 // ============================================================
 document.addEventListener("DOMContentLoaded", function() {
- localStorage.removeItem('barryPSR_premium_unlocked');
- 
+
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('input', performSearch);
@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // 🔒 INITIALIZE PREMIUM SECURITY CHECK ENGINE
     // ============================================================
     checkAppLicenseStatus();
-    // ============================================================
+    updateTrialReminder();
 
     // Fetch the raw rules JSON file
     fetch('psr_data.json')
@@ -292,42 +292,128 @@ function filterChapter() {
 function toggleBookmarkFilter() {
     showOnlyBookmarks = !showOnlyBookmarks;
     const btn = document.getElementById('bookmarkToggleBtn');
+    const hudBanner = document.getElementById('bookmarkHudBanner');
+    const searchInput = document.getElementById('searchInput');
+    const selector = document.getElementById('chapterSelector');
     if (!btn) return;
     
     if (showOnlyBookmarks) {
+        // 1. Quietly clear the search box and dropdown text selection values without triggering input crash event bugs
+        if (searchInput) searchInput.value = "";
+        if (selector) selector.value = "";
+        
         btn.innerText = "⭐ Showing Saved";
         btn.style.background = "#b45309";
         btn.style.color = "#ffffff";
+        
+        // 2. Make our polished amber HUD context dashboard banner visible instantly
+        if (hudBanner) {
+            hudBanner.classList.remove('splash-hidden-state');
+            hudBanner.style.display = "block"; // Explicitly forces display visibility layout
+        }
     } else {
         btn.innerText = "⭐ Bookmarks";
         btn.style.background = "#fef3c7";
         btn.style.color = "#92400e";
+        
+        // 3. Hide HUD banner out of your active view frames cleanly
+        if (hudBanner) {
+            hudBanner.classList.add('splash-hidden-state');
+            hudBanner.style.display = "none";
+        }
     }
+    
+    // 4. Force a clean database redraw block to snap your cards into position perfectly
     applyFilters();
 }
 
+function openBookmarkedRule(ruleId) {
+    const rule = publicServiceRules.find(r => r.id === ruleId);
+    if (!rule) return;
+
+    bookmarkDetailRuleId = ruleId;
+    showOnlyBookmarks = false;
+
+    const searchInput = document.getElementById('searchInput');
+    const selector = document.getElementById('chapterSelector');
+
+    if (searchInput) searchInput.value = "";
+    if (selector) selector.value = "";
+
+    const btn = document.getElementById('bookmarkToggleBtn');
+    if (btn) {
+        btn.innerText = "⭐ Bookmarks";
+        btn.style.background = "#fef3c7";
+        btn.style.color = "#92400e";
+    }
+
+    const hudBanner = document.getElementById('bookmarkHudBanner');
+    if (hudBanner) {
+        hudBanner.classList.add('splash-hidden-state');
+        hudBanner.style.display = "none";
+    }
+
+    displayResults([rule], "", "");
+}
+
+
 function toggleBookmark(ruleId) {
     const index = bookmarkedRuleIds.indexOf(ruleId);
+
     if (index > -1) {
         bookmarkedRuleIds.splice(index, 1);
     } else {
         bookmarkedRuleIds.push(ruleId);
     }
-    localStorage.setItem('barryPSR_bookmarks', JSON.stringify(bookmarkedRuleIds));
+
+    localStorage.setItem(
+        'barryPSR_bookmarks',
+        JSON.stringify(bookmarkedRuleIds)
+    );
+
+    // If we are viewing a saved rule in detail, keep that rule open.
+    if (bookmarkDetailRuleId !== null) {
+        const rule = publicServiceRules.find(r => r.id === bookmarkDetailRuleId);
+
+        if (rule && bookmarkedRuleIds.includes(rule.id)) {
+            displayResults([rule], "", "");
+        } else {
+            bookmarkDetailRuleId = null;
+            showOnlyBookmarks = true;
+            applyFilters();
+        }
+
+        return;
+    }
+
     applyFilters();
 }
 
 function clearFilter() {
-    document.getElementById('searchInput').value = "";
-    document.getElementById('chapterSelector').value = "";
-    showOnlyBookmarks = false;
-    
+    const searchInput = document.getElementById('searchInput');
+    const selector = document.getElementById('chapterSelector');
     const btn = document.getElementById('bookmarkToggleBtn');
+    const hudBanner = document.getElementById('bookmarkHudBanner');
+
+    // Clear search and chapter filter
+    if (searchInput) searchInput.value = "";
+    if (selector) selector.value = "";
+
+    // Exit bookmark mode and any bookmarked-rule detail view
+    showOnlyBookmarks = false;
+    bookmarkDetailRuleId = null;
+
+    // Restore normal Bookmarks button
     if (btn) {
-        btn.style.background = "";
-        btn.style.color = "";
         btn.innerText = "⭐ Bookmarks";
+        btn.style.background = "#fef3c7";
+        btn.style.color = "#92400e";
     }
+
+    // Restore the landing-page Saved Reference Vault
+    
+
+    // Return to the normal full rule listing
     applyFilters();
 }
 // ============================================================
@@ -337,6 +423,15 @@ function displayResults(rulesList, selectedChapter, activeQuery) {
     // Matched specifically to id="resultsContainer" inside your HTML file
     const resultsContainer = document.getElementById('resultsContainer');
     const countContainer = document.getElementById('resultsCount');
+    
+    
+    const hudCountText = document.getElementById('hudCountText');
+    
+    // Dynamically sync counts inside your amber HUD dashboard card element
+    if (hudCountText) {
+        hudCountText.innerText = `${bookmarkedRuleIds.length} vital rule(s) pinned for fast offline access`;
+    }
+    
     
     if (!resultsContainer || !countContainer) return;
     
@@ -364,16 +459,70 @@ function displayResults(rulesList, selectedChapter, activeQuery) {
         "18": "REGULATIONS AND APPENDIX"
     };
 
-    let lastRenderedChapter = null;
+        let lastRenderedChapter = null;
 
     if (rulesList.length === 0) {
-        resultsContainer.innerHTML = `
-            <div style="text-align: center; padding: 30px; color: #666;">
-                <p>No matching rules found in this scope.</p>
-            </div>
-        `;
+        if (showOnlyBookmarks) {
+            // Render an absolute gorgeous placeholder experience if no bookmarks exist yet
+            resultsContainer.innerHTML = `
+                <div class="bookmark-empty-state">
+                    <span class="empty-star-icon">⭐</span>
+                    <h3>Your Reference Vault is Empty</h3>
+                    <p>Tap the star icon (☆) on any Public Service Rule card across chapters to pin vital records right here for instant offline reference.</p>
+                </div>
+            `;
+        } else {
+            resultsContainer.innerHTML = `
+                <div style="text-align: center; padding: 30px; color: #666;">
+                    <p>No matching rules found in this scope.</p>
+                </div>
+            `;
+        }
         return;
     }
+
+
+// ============================================================
+// ⭐ BOOKMARK INDEX VIEW
+// Show saved rules as a compact list instead of full rule cards.
+// Tapping a saved rule opens its normal detailed rule display.
+// ============================================================
+if (showOnlyBookmarks) {
+    const bookmarkHeading = document.createElement('div');
+    bookmarkHeading.style.padding = "12px 4px 8px";
+    bookmarkHeading.style.color = "#166534";
+    bookmarkHeading.style.fontWeight = "800";
+    bookmarkHeading.style.fontSize = "1rem";
+    bookmarkHeading.innerText = "⭐ SAVED RULES";
+    resultsContainer.appendChild(bookmarkHeading);
+
+    rulesList.forEach(rule => {
+        const item = document.createElement('div');
+        item.className = 'bookmark-rule-item';
+        item.onclick = function() {
+            openBookmarkedRule(rule.id);
+        };
+
+        item.innerHTML = `
+            <div style="flex: 1;">
+                <div style="font-size: 0.72rem; color: #b45309; font-weight: 800; margin-bottom: 3px;">
+                    PSR-${rule.id}
+                </div>
+                <div style="font-size: 0.95rem; color: #1f2937; font-weight: 700; line-height: 1.35;">
+                    ${rule.title}
+                </div>
+            </div>
+
+            <div style="font-size: 1.25rem; color: #9ca3af; padding-left: 10px;">
+                ›
+            </div>
+        `;
+
+        resultsContainer.appendChild(item);
+    });
+
+    return;
+}
 
     rulesList.forEach(rule => {
         if (rule.chapter !== lastRenderedChapter) {
@@ -452,6 +601,28 @@ function displayResults(rulesList, selectedChapter, activeQuery) {
 // ANDROID HARDWARE BACK BUTTON
 document.addEventListener("backbutton", function (event) {
     event.preventDefault();
+    
+     // If viewing one bookmarked rule, return to the Saved Rules list
+    if (bookmarkDetailRuleId !== null) {
+        bookmarkDetailRuleId = null;
+        showOnlyBookmarks = true;
+
+        const btn = document.getElementById('bookmarkToggleBtn');
+        if (btn) {
+            btn.innerText = "⭐ Showing Saved";
+            btn.style.background = "#b45309";
+            btn.style.color = "#ffffff";
+        }
+
+        const hudBanner = document.getElementById('bookmarkHudBanner');
+        if (hudBanner) {
+            hudBanner.classList.remove('splash-hidden-state');
+            hudBanner.style.display = "block";
+        }
+
+        applyFilters();
+        return;
+    }   
 
     const chapterSelector = document.getElementById("chapterSelector");
     const searchInput = document.getElementById("searchInput");
@@ -495,41 +666,131 @@ function generateDeviceFingerprint() {
     return Math.abs(hash % 9000) + 1000; // Guarantees a clean 4-digit unique integer seed
 }
 
+function updateTrialReminder() {
+    const reminder = document.getElementById('trialReminder');
+    if (!reminder) return;
+
+    // Activated users do not need a trial reminder.
+    if (localStorage.getItem('barryPSR_premium_unlocked') === "true") {
+        reminder.style.display = "none";
+        return;
+    }
+
+    const trialStart = Number(localStorage.getItem('psr_trial_start'));
+
+    if (!Number.isFinite(trialStart)) {
+        reminder.style.display = "none";
+        return;
+    }
+
+    const TRIAL_DURATION = 30 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const remaining = TRIAL_DURATION - (now - trialStart);
+
+    if (remaining <= 0) {
+        reminder.innerText = "🔒 Your 30-day trial has expired. Please activate lifetime access.";
+        reminder.style.display = "block";
+        return;
+    }
+
+    const daysRemaining = Math.ceil(remaining / (24 * 60 * 60 * 1000));
+
+    if (daysRemaining <= 3) {
+        reminder.innerText =
+            `⚠️ Only ${daysRemaining} day${daysRemaining === 1 ? "" : "s"} of trial access remaining.`;
+    } else if (daysRemaining <= 7) {
+        reminder.innerText =
+            `🔔 ${daysRemaining} days of trial access remaining.`;
+    } else {
+        reminder.innerText =
+            `⏳ ${daysRemaining} days of trial access remaining.`;
+    }
+
+    reminder.style.display = "block";
+}
+
+
 function checkAppLicenseStatus() {
+    // Lifetime activation always takes priority
     const isActivated = localStorage.getItem('barryPSR_premium_unlocked');
-    
-    // If the device footprint signature is already successfully validated, kill execution and proceed
+
     if (isActivated === "true") {
         return;
     }
 
-    // Generate hardware footprint seeds
-    const seedCode = generateDeviceFingerprint();
-    const requestCode = `PSR-${seedCode}-UDU`;
-    
-    // Inject parameters safely into structural overlay interface targets
-    const codeDisplay = document.getElementById('deviceRequestCode');
-    if (codeDisplay) codeDisplay.innerText = requestCode;
+    // ================================
+    // 30-DAY PREMIUM TRIAL
+    // ================================
+    const TRIAL_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days
+    const now = Date.now();
 
-                // Dynamically compile a click-to-chat WhatsApp link targeting your number
-    const whatsappLink = document.getElementById('whatsappPurchaseLink');
-    if (whatsappLink) {
-        const myPhoneNumber = "2348052538349"; 
-        const txtMessage = encodeURIComponent(`Hello Engr Udu, I want to activate premium access for my PSR Tutor App. My Unique Request Code is: ${requestCode}`);
-        const completeUrl = "https://wa.me/" + myPhoneNumber + "?text=" + txtMessage;
+    let trialStart = localStorage.getItem('psr_trial_start');
 
-        // FIX: Override standard click behavior to force an Android system handoff
-        
+    // First launch: start the trial
+    if (!trialStart) {
+        trialStart = now.toString();
+        localStorage.setItem('psr_trial_start', trialStart);
     }
 
+    const trialStartTime = Number(trialStart);
 
+    // Basic protection against an invalid stored date
+    if (!Number.isFinite(trialStartTime) || trialStartTime > now) {
+        localStorage.setItem('psr_trial_start', now.toString());
+        trialStart = now.toString();
+    }
 
+    // Remember the latest time the app was opened
+    const lastSeen = Number(
+        localStorage.getItem('psr_last_seen_time') || 0
+    );
 
+    // Basic clock-rollback protection
+    if (lastSeen > 0 && now < lastSeen) {
+        // Treat a significant clock rollback as trial expiry
+        localStorage.setItem(
+            'psr_trial_expired',
+            'true'
+        );
+    }
 
-    // Drop authority layer blinds: unhide security lock screen instantly
-    const lockOverlay = document.getElementById('activationLockOverlay');
+    localStorage.setItem(
+        'psr_last_seen_time',
+        now.toString()
+    );
+
+    const expired =
+        localStorage.getItem('psr_trial_expired') === 'true';
+
+    const trialElapsed =
+        now - Number(trialStart);
+
+    // Trial is still active
+    if (!expired && trialElapsed < TRIAL_DURATION) {
+        return;
+    }
+
+    // ================================
+    // TRIAL EXPIRED → SHOW LOCKSCREEN
+    // ================================
+
+    const seedCode = generateDeviceFingerprint();
+    const requestCode = `PSR-${seedCode}-UDU`;
+
+    const codeDisplay =
+        document.getElementById('deviceRequestCode');
+
+    if (codeDisplay) {
+        codeDisplay.innerText = requestCode;
+    }
+
+    const lockOverlay =
+        document.getElementById('activationLockOverlay');
+
     if (lockOverlay) {
-        lockOverlay.classList.remove('splash-hidden-state');
+        lockOverlay.classList.remove(
+            'splash-hidden-state'
+        );
     }
 }
 

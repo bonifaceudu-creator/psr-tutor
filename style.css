@@ -40,7 +40,7 @@ header p {
 }
 
 main {
-    padding: 15px;
+    padding: 0 15px 15px;
 }
 
 #searchInput {
@@ -106,7 +106,7 @@ main {
     position: sticky;
     top: 0;
     background-color: var(--background-color);
-    padding: 8px 0 6px 0;
+    padding: 0 0 6px 0;
     z-index: 100;
     border-bottom: 1px solid #e2e8f0;
 }
@@ -500,4 +500,135 @@ mark {
     font-size: 0.7rem;
     margin: 16px 0 0 0;
     font-weight: 600;
+}
+
+/* Premium Bookmark HUD Dashboard Panel */
+.bookmark-hud-banner {
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    border: 1px solid #fde68a;
+    border-left: 6px solid #d97706; /* Rich amber accent anchor line */
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin: 15px 0;
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.08);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: slideDownInHUD 0.4s ease-out forwards;
+}
+
+@keyframes slideDownInHUD {
+    0% { transform: translateY(-10px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+.hud-content {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.hud-icon {
+    font-size: 1.8rem;
+    animation: pulseStarGold 2s infinite ease-in-out;
+}
+
+@keyframes pulseStarGold {
+    0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(217,119,6,0)); }
+    50% { transform: scale(1.08); filter: drop-shadow(0 2px 6px rgba(217,119,6,0.3)); }
+    100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(217,119,6,0)); }
+}
+
+.bookmark-hud-banner h4 {
+    color: #92400e;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0 0 2px 0;
+}
+
+.bookmark-hud-banner p {
+    color: #b45309;
+    font-size: 0.78rem;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Beautiful Animated Empty State Card Graphics */
+.bookmark-empty-state {
+    text-align: center;
+    padding: 50px 30px;
+    background: #ffffff;
+    border: 2px dashed #e4e4e7;
+    border-radius: 16px;
+    margin-top: 20px;
+}
+
+.empty-star-icon {
+    font-size: 3.5rem;
+    color: #e4e4e7;
+    margin-bottom: 16px;
+    display: inline-block;
+    animation: floatingDangle 3s infinite ease-in-out;
+}
+
+@keyframes floatingDangle {
+    0% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-6px) rotate(4deg); }
+    100% { transform: translateY(0) rotate(0deg); }
+}
+
+.bookmark-empty-state h3 {
+    color: #3f3f46;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+}
+
+.bookmark-empty-state p {
+    color: #71717a;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin: 0;
+}
+
+/* Micro-interaction updates for the Star button row */
+.rule-card .bookmark-btn-icon {
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.rule-card .bookmark-btn-icon:active {
+    transform: scale(1.4);
+}
+
+/* ============================================================
+   ⭐ SAVED RULES COMPACT INDEX
+   ============================================================ */
+
+.bookmark-rule-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-left: 5px solid #d97706;
+    border-radius: 10px;
+    padding: 13px 14px;
+    margin-bottom: 9px;
+    cursor: pointer;
+    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.05);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.bookmark-rule-item:active {
+    transform: scale(0.98);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.trial-reminder {
+    margin: 0 0 4px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-align: center;
 }

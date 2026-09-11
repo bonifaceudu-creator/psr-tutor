@@ -6,7 +6,7 @@
     <title>Nigeria PSR Offline Search</title>
     <!-- Linked external stylesheet -->
     <link rel="stylesheet" href="style.css">
-    <style>
+        <style>
         /* Splash screen styling isolated from page body */
         #appSplashScreen {
             position: fixed;
@@ -15,6 +15,7 @@
             background: #1a1f2c;
         }
     </style>
+
 </head>
 <body>
 
@@ -67,10 +68,11 @@
         <p>Public Service Rules (Offline Index)</p>
     </header>
 
-    <!-- Main Content Area -->
+        <!-- Main Content Area -->
     <main>
         <!-- Sticky Header Container for Controls -->
         <div class="sticky-header-wrapper">
+         <div id="trialReminder" class="trial-reminder" style="display: none;"></div> 
             <div class="search-container">
                 <input 
                     type="text" 
@@ -87,9 +89,29 @@
             </div>
         </div>
 
-        <!-- Search Results Count and List Containers -->
+        <!-- 🚀 THIS SHOULD BE THE ONLY UNIQUE RESULTS COUNT BOX LEFT: -->
+        
+        
         <div id="resultsCount" class="results-count"></div>
+
+
+
+
+        <!-- NEW Dynamic Bookmark Context Banner HUD Layout -->
+        <div id="bookmarkHudBanner" class="bookmark-hud-banner" style="display: none;">
+            <div class="hud-content">
+                <span class="hud-icon">⭐</span>
+                <div>
+                    <h4>Your Saved Reference Vault</h4>
+                    <p id="hudCountText">0 rules pinned for fast offline access</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Single Unique Rules Rendering Target Container -->
         <div id="resultsContainer" class="results-list"></div>
+
+
             <!-- Premium Activation Security Lock Overlay -->
     <div id="activationLockOverlay" class="lock-overlay splash-hidden-state">
         <div class="lock-card">
@@ -99,7 +121,7 @@
                 Unlock full lifetime access to <strong>All 18 Chapters</strong> and <strong>Powerful Search Engine </strong>
             </p>
             
-            <div class="price-badge">₦2,500 Only</div>
+            <div class="price-badge">₦1,500 Only</div>
 
             <div class="code-box">
                 <span class="code-label">YOUR UNIQUE REQUEST CODE:</span>
@@ -126,7 +148,7 @@
             </button>
 
             
-            <p class="lock-footer">Designed by Engr Udu | 100% Pass Guarantee</p>
+            <p class="lock-footer">Designed by Engr Udu</p>
         </div>
     </div>
 
