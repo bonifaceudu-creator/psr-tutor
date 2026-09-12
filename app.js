@@ -248,6 +248,26 @@ function applyFilters() {
 
 function performSearch() {
     applyFilters();
+
+    // After every search, return the viewport to the top of the results.
+    setTimeout(() => {
+        const resultsCount = document.getElementById('resultsCount');
+        const stickyHeader = document.querySelector('.sticky-header-wrapper');
+
+        if (resultsCount) {
+            const offset = stickyHeader ? stickyHeader.offsetHeight : 60;
+            const targetY =
+                resultsCount.getBoundingClientRect().top +
+                window.scrollY -
+                offset -
+                8;
+
+            window.scrollTo({
+                top: Math.max(0, targetY),
+                behavior: 'smooth'
+            });
+        }
+    }, 50);
 }
 
 function filterChapter() {
@@ -414,7 +434,16 @@ function clearFilter() {
     
 
     // Return to the normal full rule listing
+        // Return to the normal full rule listing
     applyFilters();
+
+    // Return to the beginning of the PSR document
+    setTimeout(() => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }, 50);
 }
 // ============================================================
 // UI DOM CARD INJECTION RENDER SYSTEM
@@ -572,7 +601,7 @@ if (showOnlyBookmarks) {
             highlightTokens.forEach(token => {
                 try {
                     const regex = new RegExp(`(${escapeRegExp(token)})`, 'gi');
-                    finalContent = finalContent.replace(regex, `<mark style="background: #ffeb3b; padding: 0 2px; border-radius: 2px;">$1</mark>`);
+                    finalContent = finalContent.replace(regex, `<mark style="background: #ffeb3b; padding: 0; border-radius: 2px;">$1</mark>`);
                 } catch(e) {}
             });
         }

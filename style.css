@@ -106,7 +106,7 @@ main {
     position: sticky;
     top: 0;
     background-color: var(--background-color);
-    padding: 0 0 6px 0;
+    padding: 0 0 8px 0;
     z-index: 100;
     border-bottom: 1px solid #e2e8f0;
 }
@@ -199,7 +199,7 @@ main {
 mark {
     background-color: #fef08a;
     color: #854d0e;
-    padding: 1px 4px;
+    padding: 0;
     border-radius: 3px;
 }
 
