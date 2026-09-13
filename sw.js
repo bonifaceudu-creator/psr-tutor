@@ -1,4 +1,4 @@
-const CACHE_NAME = "psr-tutor-v9.43";
+const CACHE_NAME = "psr-tutor-v9.53";
 
 const ASSETS = [
     "./",
