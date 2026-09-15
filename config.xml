@@ -58,7 +58,7 @@
 
     <!-- Normal application icon -->
     <icon src="icon-512.png" />
-
+   <plugin name="cordova-plugin-file" spec="^8.1.2" /> 
     <platform name="android">
 
         <icon
