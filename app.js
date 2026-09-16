@@ -764,6 +764,38 @@ function validateLicenseKey() {
     }
 }
 
+function generateDeviceFingerprint() {
+    // 1. Create a hidden, off-screen graphic text canvas element
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.textBaseline = "top";
+    ctx.font = "14px 'Arial'";
+    ctx.fillText('PSR-Lock-Footprint', 2, 2);
+    
+    // 2. Extract the raw pixel data array to catch microscopic GPU rendering traits
+    let canvasHash = 0;
+    try {
+        const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        for (let i = 0; i < data.length; i += 4) {
+            canvasHash += data[i];
+        }
+    } catch(e) {
+        canvasHash = 1234; // Safe fallback if canvas reading is restricted
+    }
+
+    // 3. Combine the pixel graphics fingerprint with absolute physical phone hardware attributes
+    const hardwareTraits = navigator.userAgent + screen.width + screen.height + screen.colorDepth + canvasHash;
+    
+    // 4. Run a mathematical hashing loop to lock it into a permanent 4-digit Request Code seed
+    let hash = 0;
+    for (let i = 0; i < hardwareTraits.length; i++) {
+        hash = (hash << 5) - hash + hardwareTraits.charCodeAt(i);
+        hash |= 0;
+    }
+    return Math.abs(hash % 9000) + 1000; // Returns your unchanging unique seed (e.g., 4512)
+}
+
+
 // ============================================================
 // 🚀 BULLETPROOF UNIVERSAL WHATSAPP LAUNCH ENGINE
 // ============================================================
