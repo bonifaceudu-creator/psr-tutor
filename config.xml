@@ -59,6 +59,9 @@
     <!-- Normal application icon -->
     <icon src="icon-512.png" />
    <plugin name="cordova-plugin-file" spec="^8.1.2" /> 
+  <config-file target="AndroidManifest.xml" parent="/*" xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+</config-file> 
     <platform name="android">
 
         <icon
