@@ -128,7 +128,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // ============================================================
     // 🔒 INITIALIZE PREMIUM SECURITY CHECK ENGINE
     // ============================================================
-    checkAppLicenseStatus();
+    
     updateTrialReminder();
 
     // Fetch the raw rules JSON file
@@ -159,6 +159,10 @@ document.addEventListener("DOMContentLoaded", function() {
         });
        testPersistentTrialStorage(); 
 });
+
+document.addEventListener("deviceready", function () {
+    checkAppLicenseStatus();
+}, false);
 
 function buildDynamicDropdown() {
     const selector = document.getElementById('chapterSelector');
