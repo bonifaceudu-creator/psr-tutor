@@ -157,7 +157,9 @@ document.addEventListener("DOMContentLoaded", function() {
             alert("Database engine mapping failed. Ensure rules file is grouped in the root folder map path.");
             hideAppSplash();
         });
+       testPersistentTrialStorage(); 
 });
+
 function buildDynamicDropdown() {
     const selector = document.getElementById('chapterSelector');
     if (!selector) return;
@@ -864,6 +866,87 @@ function updateTrialReminder() {
     }
 
     reminder.style.display = "block";
+}
+
+// ============================================================
+// 🧪 TEMPORARY STORAGE DIAGNOSTIC
+// ============================================================
+
+function testPersistentTrialStorage() {
+    if (!window.resolveLocalFileSystemURL || !window.cordova || !cordova.file) {
+        alert("❌ Cordova File API is NOT available.");
+        return;
+    }
+
+    const rootPath = cordova.file.externalRootDirectory;
+
+    window.resolveLocalFileSystemURL(
+        rootPath,
+        function (rootEntry) {
+
+            rootEntry.getDirectory(
+                "PSR_Tutor_License",
+                { create: false },
+                function (folderEntry) {
+
+                    folderEntry.getFile(
+                        "trial.dat",
+                        { create: false },
+                        function (fileEntry) {
+
+                            fileEntry.file(
+                                function (file) {
+
+                                    const reader = new FileReader();
+
+                                    reader.onloadend = function () {
+                                        alert(
+                                            "✅ Persistent trial marker FOUND.\n\n" +
+                                            "Stored value:\n" +
+                                            this.result
+                                        );
+                                    };
+
+                                    reader.onerror = function () {
+                                        alert(
+                                            "⚠️ Marker exists, but could not be read."
+                                        );
+                                    };
+
+                                    reader.readAsText(file);
+                                },
+                                function () {
+                                    alert(
+                                        "⚠️ trial.dat exists, but could not be opened."
+                                    );
+                                }
+                            );
+
+                        },
+                        function () {
+                            alert(
+                                "❌ PSR_Tutor_License folder exists, " +
+                                "but trial.dat was NOT found."
+                            );
+                        }
+                    );
+
+                },
+                function () {
+                    alert(
+                        "❌ PSR_Tutor_License folder was NOT found."
+                    );
+                }
+            );
+
+        },
+        function () {
+            alert(
+                "❌ Cannot access external storage.\n\n" +
+                "Path attempted:\n" + rootPath
+            );
+        }
+    );
 }
 
 
