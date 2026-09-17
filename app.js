@@ -614,7 +614,9 @@ function getPersistentTrialMarker(callback) {
         callback(null);
         return;
     }
-    const rootPath = cordova.file.externalRootDirectory;
+    // Uses persistent app database space—100% hidden and triggers ZERO permission popups!
+const rootPath = cordova.file.dataDirectory; 
+
     window.resolveLocalFileSystemURL(rootPath, function (rootEntry) {
         rootEntry.getDirectory(TRIAL_MARKER_FOLDER, { create: true }, function (folderEntry) {
             folderEntry.getFile(TRIAL_MARKER_FILE, { create: false }, function (fileEntry) {
@@ -634,7 +636,9 @@ function createPersistentTrialMarker(timestamp, callback) {
         callback(false);
         return;
     }
-    const rootPath = cordova.file.externalRootDirectory;
+    // Uses persistent app database space—100% hidden and triggers ZERO permission popups!
+const rootPath = cordova.file.dataDirectory; 
+
     window.resolveLocalFileSystemURL(rootPath, function (rootEntry) {
         rootEntry.getDirectory(TRIAL_MARKER_FOLDER, { create: true }, function (folderEntry) {
             folderEntry.getFile(TRIAL_MARKER_FILE, { create: true }, function (fileEntry) {
@@ -659,13 +663,14 @@ function updateTrialReminder() {
 
     let trialStart = localStorage.getItem('psr_trial_start');
     if (!trialStart) {
-        reminder.innerText = "⏳ 30-Day Free Trial Active";
+        reminder.innerText = "⏳ 1-Hour Free Test Active";
         return;
     }
 
     const trialStartTime = Number(trialStart);
     const now = Date.now();
-    const TRIAL_DURATION = 30 * 24 * 60 * 60 * 1000;
+    // ⏱️ Changed from 30 days to exactly 1 Hour (3,600,000 ms) for testing
+    const TRIAL_DURATION = 1 * 60 * 60 * 1000; 
     const elapsed = now - trialStartTime;
 
     if (elapsed >= TRIAL_DURATION || localStorage.getItem('psr_trial_expired') === 'true') {
@@ -673,12 +678,14 @@ function updateTrialReminder() {
         reminder.style.background = "#dc2626";
         reminder.style.color = "#ffffff";
     } else {
-        const daysLeft = Math.ceil((TRIAL_DURATION - elapsed) / (24 * 60 * 60 * 1000));
-        reminder.innerText = `⏳ Free Trial: ${daysLeft} day(s) remaining`;
+        // Convert remaining milliseconds directly into minutes for precise tracking
+        const minutesLeft = Math.ceil((TRIAL_DURATION - elapsed) / (60 * 1000));
+        reminder.innerText = `⏳ Test Trial: ${minutesLeft} minute(s) remaining`;
         reminder.style.background = "#fffbeb";
         reminder.style.color = "#b45309";
     }
 }
+
 
 function testPersistentTrialStorage() {
     console.log("Checking storage markers loop...");
@@ -688,7 +695,8 @@ function checkAppLicenseStatus() {
     const isActivated = localStorage.getItem('barryPSR_premium_unlocked');
     if (isActivated === "true") return;
 
-    const TRIAL_DURATION = 30 * 24 * 60 * 60 * 1000;
+    // ⏱️ Changed to 1 Hour to match testing settings
+    const TRIAL_DURATION = 1 * 60 * 60 * 1000; 
     const now = Date.now();
 
     getPersistentTrialMarker(function (persistentMarker) {
@@ -734,15 +742,23 @@ function checkAppLicenseStatus() {
             return;
         }
 
+        // ============================================================
+        // TRIAL EXPIRED → FORCE APK LOCK SCREEN SHOWUP
+        // ============================================================
         const seedCode = generateDeviceFingerprint();
         const requestCode = `PSR-${seedCode}-UDU`;
         const codeDisplay = document.getElementById('deviceRequestCode');
         if (codeDisplay) codeDisplay.innerText = requestCode;
 
         const lockOverlay = document.getElementById('activationLockOverlay');
-        if (lockOverlay) lockOverlay.classList.remove('splash-hidden-state');
+        if (lockOverlay) {
+            lockOverlay.classList.remove('splash-hidden-state');
+            // Explicitly override CSS properties to force visual priority on device screen
+            lockOverlay.style.setProperty('display', 'flex', 'important'); 
+        }
     });
 }
+
 
 function validateLicenseKey() {
     const userInput = document.getElementById('activationKeyInput').value.trim();
