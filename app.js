@@ -603,11 +603,42 @@ document.addEventListener("backbutton", function (event) {
         navigator.app.exitApp();
     }
 }, false);
+
 // ============================================================
-// 🔒 PERSISTENT TRIAL MARKER SYSTEM
+// 🔒 STABLE PERMANENT DEVICE IDENTIFIER GENERATOR
 // ============================================================
-const TRIAL_MARKER_FOLDER = "PSR_Tutor_License";
-const TRIAL_MARKER_FILE = "trial.dat";
+function getPermanentDeviceId() {
+    // 1. Try native Cordova device plugin UUID first
+    if (window.device && window.device.uuid) {
+        return window.device.uuid;
+    }
+
+    // 2. Check if persistent ID was already assigned to this installation
+    let localId = localStorage.getItem('psr_persistent_device_id');
+    if (localId) {
+        return localId;
+    }
+
+    // 3. Generate a permanent unique hardware token once upon install
+    localId = 'DEV-' + Math.floor(100000 + Math.random() * 900000) + '-' + Date.now().toString(36);
+    localStorage.setItem('psr_persistent_device_id', localId);
+    return localId;
+}
+
+function generateDeviceFingerprint() {
+    const rawDeviceId = getPermanentDeviceId();
+    
+    // Hash the permanent ID into a clean 4-digit numerical seed
+    let hash = 0;
+    for (let i = 0; i < rawDeviceId.length; i++) {
+        hash = (hash << 5) - hash + rawDeviceId.charCodeAt(i);
+        hash |= 0;
+    }
+    return Math.abs(hash % 9000) + 1000; // Unchanging 4-digit seed (e.g., 5821)
+}
+
+// Secret Salt for Key Generation
+const ENGR_UDU_SECRET_SALT = 7;
 
 // ============================================================
 // 🔒 PERSISTENT HIGH-INTEGRITY INDEXEDDB TRIAL TRACKER SYSTEM
@@ -617,7 +648,6 @@ const DB_VERSION = 1;
 const STORE_NAME = "license_markers";
 
 function getPersistentTrialMarker(callback) {
-    // Safety fallback: if IndexedDB is blocked, drop back to native localStorage
     if (!window.indexedDB) {
         callback(localStorage.getItem('psr_trial_start'));
         return;
@@ -654,7 +684,7 @@ function getPersistentTrialMarker(callback) {
 function createPersistentTrialMarker(timestamp, callback) {
     if (!window.indexedDB) {
         localStorage.setItem('psr_trial_start', timestamp);
-        callback(true);
+        if (callback) callback(true);
         return;
     }
 
@@ -674,17 +704,16 @@ function createPersistentTrialMarker(timestamp, callback) {
             const store = transaction.objectStore(STORE_NAME);
             const putReq = store.put(String(timestamp), "original_install_timestamp");
             
-            putReq.oncomplete = function() { callback(true); };
-            putReq.onsuccess = function() { callback(true); };
-            putReq.onerror = function() { callback(false); };
+            putReq.oncomplete = function() { if (callback) callback(true); };
+            putReq.onsuccess = function() { if (callback) callback(true); };
+            putReq.onerror = function() { if (callback) callback(false); };
         } catch(e) {
-            callback(false);
+            if (callback) callback(false);
         }
     };
 
-    request.onerror = function() { callback(false); };
+    request.onerror = function() { if (callback) callback(false); };
 }
-
 
 function updateTrialReminder() {
     const reminder = document.getElementById('trialReminder');
@@ -697,22 +726,23 @@ function updateTrialReminder() {
 
     let trialStart = localStorage.getItem('psr_trial_start');
     if (!trialStart) {
-        reminder.innerText = "⏳ 1-Hour Free Test Active";
+        reminder.innerText = "⏳ Initializing Trial Period...";
         return;
     }
 
     const trialStartTime = Number(trialStart);
     const now = Date.now();
-    // ⏱️ Changed from 30 days to exactly 1 Hour (3,600,000 ms) for testing
+    
+    // ⏱️ 1-Hour Test Duration (3,600,000 ms)
     const TRIAL_DURATION = 1 * 60 * 60 * 1000; 
     const elapsed = now - trialStartTime;
 
     if (elapsed >= TRIAL_DURATION || localStorage.getItem('psr_trial_expired') === 'true') {
+        localStorage.setItem('psr_trial_expired', 'true');
         reminder.innerText = "🔒 Trial Period Expired";
         reminder.style.background = "#dc2626";
         reminder.style.color = "#ffffff";
     } else {
-        // Convert remaining milliseconds directly into minutes for precise tracking
         const minutesLeft = Math.ceil((TRIAL_DURATION - elapsed) / (60 * 1000));
         reminder.innerText = `⏳ Test Trial: ${minutesLeft} minute(s) remaining`;
         reminder.style.background = "#fffbeb";
@@ -720,47 +750,34 @@ function updateTrialReminder() {
     }
 }
 
-
-function testPersistentTrialStorage() {
-    console.log("Checking storage markers loop...");
-}
-
 function checkAppLicenseStatus() {
     const isActivated = localStorage.getItem('barryPSR_premium_unlocked');
     if (isActivated === "true") return;
 
-    // ⏱️ Changed to 1 Hour to match testing settings
-    const TRIAL_DURATION = 1 * 60 * 60 * 1000; 
+    const TRIAL_DURATION = 1 * 60 * 60 * 1000; // 1 hour test
     const now = Date.now();
 
     getPersistentTrialMarker(function (persistentMarker) {
         let trialStart = localStorage.getItem('psr_trial_start');
 
+        // Restore trial start timestamp if missing in local storage but present in IndexedDB
         if (!trialStart && persistentMarker) {
             trialStart = persistentMarker;
             localStorage.setItem('psr_trial_start', trialStart);
         }
 
+        // Initialize trial start ONLY IF IT DOES NOT EXIST
         if (!trialStart) {
             trialStart = now.toString();
             localStorage.setItem('psr_trial_start', trialStart);
             createPersistentTrialMarker(trialStart, function (success) {
-                console.log(success ? "PSR marker saved." : "PSR marker failed.");
                 updateTrialReminder();
             });
         }
 
         let trialStartTime = Number(trialStart);
 
-        if (!Number.isFinite(trialStartTime) || trialStartTime > now) {
-            trialStart = now.toString();
-            trialStartTime = now;
-            localStorage.setItem('psr_trial_start', trialStart);
-            createPersistentTrialMarker(trialStart, function () {
-                updateTrialReminder();
-            });
-        }
-
+        // Prevent clock-rollback tampering
         const lastSeen = Number(localStorage.getItem('psr_last_seen_time') || 0);
         if (lastSeen > 0 && now < lastSeen) {
             localStorage.setItem('psr_trial_expired', 'true');
@@ -777,8 +794,9 @@ function checkAppLicenseStatus() {
         }
 
         // ============================================================
-        // TRIAL EXPIRED → FORCE APK LOCK SCREEN SHOWUP
+        // TRIAL EXPIRED → SHOW APK LOCK OVERLAY
         // ============================================================
+        localStorage.setItem('psr_trial_expired', 'true');
         const seedCode = generateDeviceFingerprint();
         const requestCode = `PSR-${seedCode}-UDU`;
         const codeDisplay = document.getElementById('deviceRequestCode');
@@ -787,12 +805,19 @@ function checkAppLicenseStatus() {
         const lockOverlay = document.getElementById('activationLockOverlay');
         if (lockOverlay) {
             lockOverlay.classList.remove('splash-hidden-state');
-            // Explicitly override CSS properties to force visual priority on device screen
             lockOverlay.style.setProperty('display', 'flex', 'important'); 
         }
     });
 }
 
+// Run checks on DOM Ready & Device Ready
+document.addEventListener("DOMContentLoaded", function () {
+    checkAppLicenseStatus();
+});
+
+document.addEventListener("deviceready", function () {
+    checkAppLicenseStatus();
+}, false);
 
 function validateLicenseKey() {
     const userInput = document.getElementById('activationKeyInput').value.trim();
@@ -814,38 +839,6 @@ function validateLicenseKey() {
     }
 }
 
-function generateDeviceFingerprint() {
-    // 1. Create a hidden, off-screen graphic text canvas element
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    ctx.textBaseline = "top";
-    ctx.font = "14px 'Arial'";
-    ctx.fillText('PSR-Lock-Footprint', 2, 2);
-    
-    // 2. Extract the raw pixel data array to catch microscopic GPU rendering traits
-    let canvasHash = 0;
-    try {
-        const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-        for (let i = 0; i < data.length; i += 4) {
-            canvasHash += data[i];
-        }
-    } catch(e) {
-        canvasHash = 1234; // Safe fallback if canvas reading is restricted
-    }
-
-    // 3. Combine the pixel graphics fingerprint with absolute physical phone hardware attributes
-    const hardwareTraits = navigator.userAgent + screen.width + screen.height + screen.colorDepth + canvasHash;
-    
-    // 4. Run a mathematical hashing loop to lock it into a permanent 4-digit Request Code seed
-    let hash = 0;
-    for (let i = 0; i < hardwareTraits.length; i++) {
-        hash = (hash << 5) - hash + hardwareTraits.charCodeAt(i);
-        hash |= 0;
-    }
-    return Math.abs(hash % 9000) + 1000; // Returns your unchanging unique seed (e.g., 4512)
-}
-
-
 // ============================================================
 // 🚀 BULLETPROOF UNIVERSAL WHATSAPP LAUNCH ENGINE
 // ============================================================
@@ -854,14 +847,10 @@ function launchWhatsAppOrderingIntents() {
     const requestCode = `PSR-${seedCode}-UDU`;
     const myPhoneNumber = "2348052538349";
     const message = `Hello Engr Udu, I want to activate premium access for my PSR Tutor App. My Unique Request Code is: ${requestCode}`;
-    const completeUrl = "https://whatsapp.com" + myPhoneNumber + "&text=" + encodeURIComponent(message);
-
-    console.log("Opening WhatsApp:", completeUrl);
+    const completeUrl = "https://api.whatsapp.com/send?phone=" + myPhoneNumber + "&text=" + encodeURIComponent(message);
 
     if (window.cordova && window.cordova.InAppBrowser) {
         window.cordova.InAppBrowser.open(completeUrl, '_system');
-    } else if (typeof cordova !== 'undefined' && cordova.InAppBrowser) {
-        cordova.InAppBrowser.open(completeUrl, '_system');
     } else {
         window.open(completeUrl, '_system');
     }
