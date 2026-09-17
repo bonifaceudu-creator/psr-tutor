@@ -609,48 +609,82 @@ document.addEventListener("backbutton", function (event) {
 const TRIAL_MARKER_FOLDER = "PSR_Tutor_License";
 const TRIAL_MARKER_FILE = "trial.dat";
 
+// ============================================================
+// 🔒 PERSISTENT HIGH-INTEGRITY INDEXEDDB TRIAL TRACKER SYSTEM
+// ============================================================
+const DB_NAME = "PSR_Tutor_Secure_Registry";
+const DB_VERSION = 1;
+const STORE_NAME = "license_markers";
+
 function getPersistentTrialMarker(callback) {
-    if (!window.resolveLocalFileSystemURL || !window.cordova || !cordova.file) {
-        callback(null);
+    // Safety fallback: if IndexedDB is blocked, drop back to native localStorage
+    if (!window.indexedDB) {
+        callback(localStorage.getItem('psr_trial_start'));
         return;
     }
-    // Uses persistent app database space—100% hidden and triggers ZERO permission popups!
-const rootPath = cordova.file.dataDirectory; 
 
-    window.resolveLocalFileSystemURL(rootPath, function (rootEntry) {
-        rootEntry.getDirectory(TRIAL_MARKER_FOLDER, { create: true }, function (folderEntry) {
-            folderEntry.getFile(TRIAL_MARKER_FILE, { create: false }, function (fileEntry) {
-                fileEntry.file(function (file) {
-                    const reader = new FileReader();
-                    reader.onloadend = function () { callback(this.result || null); };
-                    reader.onerror = function () { callback(null); };
-                    reader.readAsText(file);
-                }, function () { callback(null); });
-            }, function () { callback(null); });
-        }, function () { callback(null); });
-    }, function () { callback(null); });
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    
+    request.onupgradeneeded = function(event) {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME);
+        }
+    };
+
+    request.onsuccess = function(event) {
+        const db = event.target.result;
+        try {
+            const transaction = db.transaction([STORE_NAME], "readonly");
+            const store = transaction.objectStore(STORE_NAME);
+            const getReq = store.get("original_install_timestamp");
+            
+            getReq.onsuccess = function() {
+                callback(getReq.result || null);
+            };
+            getReq.onerror = function() { callback(null); };
+        } catch(e) {
+            callback(null);
+        }
+    };
+
+    request.onerror = function() { callback(null); };
 }
 
 function createPersistentTrialMarker(timestamp, callback) {
-    if (!window.resolveLocalFileSystemURL || !window.cordova || !cordova.file) {
-        callback(false);
+    if (!window.indexedDB) {
+        localStorage.setItem('psr_trial_start', timestamp);
+        callback(true);
         return;
     }
-    // Uses persistent app database space—100% hidden and triggers ZERO permission popups!
-const rootPath = cordova.file.dataDirectory; 
 
-    window.resolveLocalFileSystemURL(rootPath, function (rootEntry) {
-        rootEntry.getDirectory(TRIAL_MARKER_FOLDER, { create: true }, function (folderEntry) {
-            folderEntry.getFile(TRIAL_MARKER_FILE, { create: true }, function (fileEntry) {
-                fileEntry.createWriter(function (writer) {
-                    writer.onwriteend = function () { callback(true); };
-                    writer.onerror = function () { callback(false); };
-                    writer.write(String(timestamp));
-                }, function () { callback(false); });
-            }, function () { callback(false); });
-        }, function () { callback(false); });
-    }, function () { callback(false); });
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onupgradeneeded = function(event) {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME);
+        }
+    };
+
+    request.onsuccess = function(event) {
+        const db = event.target.result;
+        try {
+            const transaction = db.transaction([STORE_NAME], "readwrite");
+            const store = transaction.objectStore(STORE_NAME);
+            const putReq = store.put(String(timestamp), "original_install_timestamp");
+            
+            putReq.oncomplete = function() { callback(true); };
+            putReq.onsuccess = function() { callback(true); };
+            putReq.onerror = function() { callback(false); };
+        } catch(e) {
+            callback(false);
+        }
+    };
+
+    request.onerror = function() { callback(false); };
 }
+
 
 function updateTrialReminder() {
     const reminder = document.getElementById('trialReminder');
