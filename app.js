@@ -6,7 +6,6 @@ let bookmarkDetailRuleId = null;
 
 // Fast search index variables
 let searchIndex = [];
-let searchTimer = null;
 
 // ============================================================
 // PSR INTELLIGENT SEARCH VOCABULARY
@@ -103,20 +102,71 @@ function hideAppSplash() {
     const splash = document.getElementById('appSplashScreen');
     if (splash) {
         splash.classList.add('splash-hidden-state');
+        setTimeout(() => {
+            splash.style.display = 'none';
+        }, 500);
     }
 }
-// ============================================================
-// APP INITIALIZATION
-// ============================================================
+
+function triggerActivationLock() {
+    const seedCode = generateDeviceFingerprint();
+    const requestCode = `PSR-${seedCode}-UDU`;
+
+    const codeDisplay = document.getElementById('deviceRequestCode');
+    if (codeDisplay) {
+        codeDisplay.innerText = requestCode;
+    }
+
+    const lockOverlay = document.getElementById('activationLockOverlay');
+    if (lockOverlay) {
+        lockOverlay.classList.remove('splash-hidden-state');
+        lockOverlay.style.display = 'flex';
+    }
+}
+
+function closeActivationLock() {
+    const lockOverlay = document.getElementById('activationLockOverlay');
+
+    if (lockOverlay) {
+        lockOverlay.classList.add('splash-hidden-state');
+        lockOverlay.style.display = 'none';
+    }
+
+    // Return to the normal document view.
+    const selector = document.getElementById('chapterSelector');
+    const searchInput = document.getElementById('searchInput');
+
+    if (selector) selector.value = "";
+    if (searchInput) searchInput.value = "";
+
+    showOnlyBookmarks = false;
+    bookmarkDetailRuleId = null;
+
+    applyFilters();
+
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
+
 // ============================================================
 // APP INITIALIZATION
 // ============================================================
 document.addEventListener("DOMContentLoaded", function() {
+
+    // 🔒 SAFETY NET: Guarantee splash removal within 2.5 seconds max
+    const fallbackSplashTimer = setTimeout(() => {
+        console.warn("Splash screen dismissed by safety fallback timer.");
+        hideAppSplash();
+    }, 2500);
+
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('input', performSearch);
     }
     
+    // Load saved bookmarks out of localStorage memory
     const savedBookmarks = localStorage.getItem('barryPSR_bookmarks');
     if (savedBookmarks) {
         try {
@@ -126,16 +176,13 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // ============================================================
-    // 🔒 INITIALIZE PREMIUM SECURITY CHECK ENGINE
-    // Safety wrap catches references gracefully even if chunks load late
-    // ============================================================
     try {
-        if (typeof updateTrialReminder === "function") {
-            updateTrialReminder();
-        }
-    } catch(e) { console.warn("Reminder layout hook deferred."); }
+        updateTrialReminder();
+    } catch(e) {
+        console.error("Trial reminder error:", e);
+    }
 
+    // Fetch the raw rules JSON file
     fetch('psr_data.json')
         .then(response => {
             if (!response.ok) {
@@ -146,27 +193,21 @@ document.addEventListener("DOMContentLoaded", function() {
         .then(data => {
             publicServiceRules = data;
             
+            // Trigger dynamic core systems builders
             buildSearchIndex();
             buildDynamicDropdown();
             applyFilters();
 
-            setTimeout(() => {
-                hideAppSplash();
-            }, 1300);
+            clearTimeout(fallbackSplashTimer);
+            hideAppSplash();
         })
         .catch(error => {
             console.error("Initialization loop crash:", error);
-            alert("Database engine mapping failed. Ensure rules file is grouped in the root folder map path.");
+            clearTimeout(fallbackSplashTimer);
             hideAppSplash();
         });
-
-    try {
-        if (typeof testPersistentTrialStorage === "function") {
-            testPersistentTrialStorage();
-        }
-    } catch(e) {}
+ 
 });
-
 
 document.addEventListener("deviceready", function () {
     checkAppLicenseStatus();
@@ -205,17 +246,69 @@ function buildDynamicDropdown() {
     uniqueChapters.forEach(ch => {
         const option = document.createElement('option');
         option.value = ch;
-        option.innerText = `Ch. ${ch}: ${chapterTitles[ch] || 'Public Service Protocol'}`;
+
+        const isUnlocked = localStorage.getItem('barryPSR_premium_unlocked') === "true";
+        const unlockedChapterLimit = isUnlocked ? 18 : getUnlockedChapterLimit();
+        const isLocked = !isUnlocked && parseInt(ch, 10) > unlockedChapterLimit;
+
+        option.innerText = `Ch. ${ch}: ${chapterTitles[ch] || 'Public Service Protocol'}${isLocked ? ' 🔒' : ''}`;
+
         selector.appendChild(option);
     });
 }
+
 // ============================================================
 // CONTINUOUS NARROWING AND-LOGIC SEARCH FILTERS
 // ============================================================
+function getUnlockedChapterLimit() {
+    const trialStart = Number(localStorage.getItem('psr_trial_start'));
+
+    // If no valid trial start exists, keep the initial access level.
+    if (!Number.isFinite(trialStart)) {
+        return 3;
+    }
+
+    const TRIAL_DAY = 24 * 60 * 60 * 1000; // Production: 1 day = 24 hours
+    const elapsed = Date.now() - trialStart;
+
+    const dayNumber = Math.floor(elapsed / TRIAL_DAY) + 1;
+
+    if (dayNumber === 1) return 3;
+    if (dayNumber === 2) return 6;
+    if (dayNumber === 3) return 9;
+    if (dayNumber === 4) return 12;
+    if (dayNumber === 5) return 15;
+    if (dayNumber === 6) return 18;
+    if (dayNumber === 7) return 18;
+
+    // Day 8 onward
+    return 2;
+}
+
+
 function applyFilters() {
-    const queryInput = document.getElementById('searchInput').value.toLowerCase().trim();
-    const selectedChapter = document.getElementById('chapterSelector').value;
-    
+    const isUnlocked = localStorage.getItem('barryPSR_premium_unlocked') === "true";
+
+    const selectedChapter = document.getElementById('chapterSelector')
+        ? document.getElementById('chapterSelector').value
+        : "";
+
+    const searchInput = document.getElementById('searchInput');
+    const queryInput = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
+    // Determine the highest chapter currently available.
+    const unlockedChapterLimit = isUnlocked ? 18 : getUnlockedChapterLimit();
+
+    // If the selected chapter is currently locked, show the activation screen.
+    if (
+        !isUnlocked &&
+        selectedChapter &&
+        parseInt(selectedChapter, 10) > unlockedChapterLimit
+    ) {
+        triggerActivationLock();
+        return;
+    }
+
     const queryCleaned = queryInput.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()'"?[\]\\]/g, " ");
     const queryTokens = queryCleaned.split(/\s+/).filter(token => token.length > 0);
 
@@ -224,6 +317,12 @@ function applyFilters() {
         const matchesBookmarkState = !showOnlyBookmarks || bookmarkedRuleIds.includes(rule.id);
         
         if (!matchesChapter || !matchesBookmarkState) return false;
+
+        // Only show chapters currently unlocked for this user.
+        if (!isUnlocked && parseInt(rule.chapter, 10) > unlockedChapterLimit) {
+            return false;
+        }
+
         if (queryInput === "") return true;
 
         const numericMatch = queryInput.replace(/[^0-9]/g, "");
@@ -231,10 +330,11 @@ function applyFilters() {
             return true;
         }
 
-        const searchCanvas = `psr-${rule.id} ${rule.title} ${rule.content}`.toLowerCase();
+        const searchCanvas = `psr-${rule.id} ${rule.title}${rule.content}`.toLowerCase();
         
         return queryTokens.every(token => {
             if (searchCanvas.includes(token)) return true;
+            
             const alternatives = searchSynonyms[token] || [];
             return alternatives.some(alt => searchCanvas.includes(alt));
         });
@@ -263,6 +363,7 @@ function performSearch() {
         if (resultsCount) {
             const offset = stickyHeader ? stickyHeader.offsetHeight : 60;
             const targetY = resultsCount.getBoundingClientRect().top + window.scrollY - offset - 8;
+
             window.scrollTo({
                 top: Math.max(0, targetY),
                 behavior: 'smooth'
@@ -274,16 +375,13 @@ function performSearch() {
 function filterChapter() {
     const selector = document.getElementById('chapterSelector');
     const searchInput = document.getElementById('searchInput');
-    const selectedChapter = selector.value;
+    const selectedChapter = selector ? selector.value : "";
 
     if (selectedChapter !== "") {
         if (searchInput) searchInput.value = "";
         showOnlyBookmarks = false;
         
-        selector.value = "";
         applyFilters();
-        
-        selector.value = selectedChapter;
 
         setTimeout(() => {
             const chapterHeader = document.querySelector(`.chapter-header[data-chapter="${selectedChapter}"]`);
@@ -292,7 +390,11 @@ function filterChapter() {
             if (chapterHeader) {
                 const offset = stickyHeader ? stickyHeader.offsetHeight : 60;
                 const targetY = chapterHeader.getBoundingClientRect().top + window.scrollY - offset - 10;
-                window.scrollTo({ top: targetY, behavior: 'smooth' });
+                
+                window.scrollTo({ 
+                    top: targetY, 
+                    behavior: 'smooth' 
+                });
             }
         }, 80);
     } else {
@@ -302,8 +404,9 @@ function filterChapter() {
 
 function toggleBookmarkFilter() {
     showOnlyBookmarks = !showOnlyBookmarks;
+    bookmarkDetailRuleId = null;
+    
     const btn = document.getElementById('bookmarkToggleBtn');
-    const hudBanner = document.getElementById('bookmarkHudBanner');
     const searchInput = document.getElementById('searchInput');
     const selector = document.getElementById('chapterSelector');
     if (!btn) return;
@@ -315,64 +418,48 @@ function toggleBookmarkFilter() {
         btn.innerText = "⭐ Showing Saved";
         btn.style.background = "#b45309";
         btn.style.color = "#ffffff";
-        
-        if (hudBanner) {
-            hudBanner.classList.remove('splash-hidden-state');
-            hudBanner.style.display = "block";
-        }
     } else {
         btn.innerText = "⭐ Bookmarks";
         btn.style.background = "#fef3c7";
         btn.style.color = "#92400e";
-        
-        if (hudBanner) {
-            hudBanner.classList.add('splash-hidden-state');
-            hudBanner.style.display = "none";
-        }
     }
+    
     applyFilters();
 }
 
 function openBookmarkedRule(ruleId) {
+    const isUnlocked = localStorage.getItem('barryPSR_premium_unlocked') === "true";
+    const isExpired = localStorage.getItem('psr_trial_expired') === 'true';
+
     const rule = publicServiceRules.find(r => r.id === ruleId);
     if (!rule) return;
 
+    // Check if user is attempting to open a saved Chapter 3+ rule after trial expiration
+    if (!isUnlocked && isExpired && parseInt(rule.chapter, 10) > 2) {
+        triggerActivationLock();
+        return;
+    }
+
     bookmarkDetailRuleId = ruleId;
     showOnlyBookmarks = false;
-
-    const searchInput = document.getElementById('searchInput');
-    const selector = document.getElementById('chapterSelector');
-
-    if (searchInput) searchInput.value = "";
-    if (selector) selector.value = "";
-
-    const btn = document.getElementById('bookmarkToggleBtn');
-    if (btn) {
-        btn.innerText = "⭐ Bookmarks";
-        btn.style.background = "#fef3c7";
-        btn.style.color = "#92400e";
-    }
-
-    const hudBanner = document.getElementById('bookmarkHudBanner');
-    if (hudBanner) {
-        hudBanner.classList.add('splash-hidden-state');
-        hudBanner.style.display = "none";
-    }
 
     displayResults([rule], "", "");
 }
 
 function toggleBookmark(ruleId) {
     const index = bookmarkedRuleIds.indexOf(ruleId);
+
     if (index > -1) {
         bookmarkedRuleIds.splice(index, 1);
     } else {
         bookmarkedRuleIds.push(ruleId);
     }
+
     localStorage.setItem('barryPSR_bookmarks', JSON.stringify(bookmarkedRuleIds));
 
     if (bookmarkDetailRuleId !== null) {
         const rule = publicServiceRules.find(r => r.id === bookmarkDetailRuleId);
+
         if (rule && bookmarkedRuleIds.includes(rule.id)) {
             displayResults([rule], "", "");
         } else {
@@ -382,6 +469,7 @@ function toggleBookmark(ruleId) {
         }
         return;
     }
+
     applyFilters();
 }
 
@@ -403,27 +491,125 @@ function clearFilter() {
     }
 
     applyFilters();
+
     setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
     }, 50);
 }
+
 // ============================================================
 // UI DOM CARD INJECTION RENDER SYSTEM
 // ============================================================
 function displayResults(rulesList, selectedChapter, activeQuery) {
     const resultsContainer = document.getElementById('resultsContainer');
     const countContainer = document.getElementById('resultsCount');
-    const hudCountText = document.getElementById('hudCountText');
-    
-    if (hudCountText) {
-        hudCountText.innerText = `${bookmarkedRuleIds.length} vital rule(s) pinned for fast offline access`;
-    }
     
     if (!resultsContainer || !countContainer) return;
     
     resultsContainer.innerHTML = "";
     countContainer.innerText = `Found ${rulesList.length} rule(s)`;
+
+    const isUnlocked = localStorage.getItem('barryPSR_premium_unlocked') === "true";
+    const isExpired = localStorage.getItem('psr_trial_expired') === 'true';
+
+    // Handle Empty Search/Bookmark States
+    if (rulesList.length === 0) {
+        if (showOnlyBookmarks) {
+            resultsContainer.innerHTML = `
+                <div class="bookmark-empty-state" style="text-align: center; padding: 40px 20px; color: #b45309;">
+                    <span style="font-size: 3rem;">⭐</span>
+                    <h3 style="margin-top: 10px; font-weight: 800;">Your Reference Vault is Empty</h3>
+                    <p style="font-size: 0.9rem; color: #666; max-width: 300px; margin: 8px auto 0;">Tap the star icon (☆) on any Public Service Rule card across chapters to pin vital records right here for instant offline reference.</p>
+                </div>
+            `;
+        } else if (!isUnlocked && isExpired && selectedChapter && parseInt(selectedChapter, 10) > 2) {
+            resultsContainer.innerHTML = `
+                <div style="text-align: center; padding: 30px; color: #b91c1c;">
+                    <span style="font-size: 2.5rem;">🔒</span>
+                    <h3 style="margin-top: 8px; font-weight: 800;">Chapter ${selectedChapter} is Locked</h3>
+                    <p style="font-size: 0.85rem; color: #555; margin-top: 4px;">Your trial has ended. Activate full access to view Chapter ${selectedChapter}.</p>
+                    <button onclick="triggerActivationLock()" style="margin-top: 12px; background: #008751; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: pointer;">Activate Access</button>
+                </div>
+            `;
+        } else {
+            resultsContainer.innerHTML = `
+                <div style="text-align: center; padding: 30px; color: #666;">
+                    <p>No matching rules found in this scope.</p>
+                </div>
+            `;
+        }
+        return;
+    }
     
+     // ------------------------------------------------------------
+    // MODE 1: BOOKMARK VAULT VIEW (CLICKABLE LIST FORMAT)
+    // ------------------------------------------------------------
+    if (showOnlyBookmarks && bookmarkDetailRuleId === null) {
+        const bookmarkWrapper = document.createElement('div');
+        bookmarkWrapper.className = 'bookmark-vault-list';
+        bookmarkWrapper.style.display = 'flex';
+        bookmarkWrapper.style.flexDirection = 'column';
+        bookmarkWrapper.style.gap = '8px';
+        bookmarkWrapper.style.marginTop = '10px';
+
+        rulesList.forEach(rule => {
+            const isLockedRule = !isUnlocked && isExpired && parseInt(rule.chapter, 10) > 2;
+
+            const listItem = document.createElement('div');
+            listItem.className = 'bookmark-list-item';
+            listItem.style.background = '#ffffff';
+            listItem.style.border = '1px solid #fcd34d';
+            listItem.style.borderRadius = '8px';
+            listItem.style.padding = '12px 14px';
+            listItem.style.display = 'flex';
+            listItem.style.alignItems = 'center';
+            listItem.style.justifyContent = 'space-between';
+            listItem.style.cursor = 'pointer';
+            listItem.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+
+            const lockBadge = isLockedRule ? `<span style="font-size: 0.8rem; margin-left: 6px;">🔒</span>` : ``;
+
+            listItem.innerHTML = `
+                <div class="bookmark-text-area" style="flex: 1; padding-right: 10px; text-align: left;">
+                    <div style="font-size: 0.75rem; font-weight: 700; color: #b45309; text-transform: uppercase;">
+                        PSR-${rule.id} &bull; Ch. ${rule.chapter}${lockBadge}
+                    </div>
+                    <div style="font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-top: 2px; line-height: 1.3;">
+                        ${rule.title}
+                    </div>
+                </div>
+                <button class="bookmark-star-btn" style="background: none; border: none; font-size: 1.3rem; color: #b45309; cursor: pointer; padding: 4px 8px;">
+                    ★
+                </button>
+            `;
+
+            // Bind events safely
+            const textArea = listItem.querySelector('.bookmark-text-area');
+            const starBtn = listItem.querySelector('.bookmark-star-btn');
+
+            if (textArea) {
+                textArea.addEventListener('click', () => openBookmarkedRule(rule.id));
+            }
+            if (starBtn) {
+                starBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleBookmark(rule.id);
+                });
+            }
+
+            bookmarkWrapper.appendChild(listItem);
+        });
+
+        resultsContainer.appendChild(bookmarkWrapper);
+        return;
+    }
+
+    // ------------------------------------------------------------
+    // MODE 2: STANDARD / SEARCH / SINGLE DETAIL CARD VIEW
+    // ------------------------------------------------------------
     const chapterTitles = {
         "1": "INTRODUCTION & AUTHORITY",
         "2": "APPOINTMENTS AND LEAVING THE SERVICE",
@@ -441,77 +627,37 @@ function displayResults(rulesList, selectedChapter, activeQuery) {
         "14": "ALLOWANCES",
         "15": "INNOVATIONS AND INVENTIONS",
         "16": "COMPENSATION AND INSURANCE",
-        "17": "APPLICATION OF the PUBLIC SERVICE RULES TO FEDERAL GOVERNMENT PARASTATALS",
+        "17": "APPLICATION OF THE PUBLIC SERVICE RULES TO FEDERAL GOVERNMENT PARASTATALS",
         "18": "REGULATIONS AND APPENDIX"
     };
 
     let lastRenderedChapter = null;
 
-    if (rulesList.length === 0) {
-        if (showOnlyBookmarks) {
-            resultsContainer.innerHTML = `
-                <div class="bookmark-empty-state">
-                    <span class="empty-star-icon">⭐</span>
-                    <h3>Your Reference Vault is Empty</h3>
-                    <p>Tap the star icon (☆) on any Public Service Rule card across chapters to pin vital records right here for instant offline reference.</p>
-                </div>
-            `;
-        } else {
-            resultsContainer.innerHTML = `
-                <div style="text-align: center; padding: 30px; color: #666;">
-                    <p>No matching rules found in this scope.</p>
-                </div>
-            `;
-        }
-        return;
-    }
-
-    if (showOnlyBookmarks) {
-        const bookmarkHeading = document.createElement('div');
-        bookmarkHeading.style.padding = "12px 4px 8px";
-        bookmarkHeading.style.color = "#166534";
-        bookmarkHeading.style.fontWeight = "800";
-        bookmarkHeading.style.fontSize = "1rem";
-        bookmarkHeading.innerText = "⭐ SAVED RULES";
-        resultsContainer.appendChild(bookmarkHeading);
-
-        rulesList.forEach(rule => {
-            const item = document.createElement('div');
-            item.className = 'bookmark-rule-item';
-            item.onclick = function() { openBookmarkedRule(rule.id); };
-            item.innerHTML = `
-                <div style="flex: 1;">
-                    <div style="font-size: 0.72rem; color: #b45309; font-weight: 800; margin-bottom: 3px;">PSR-${rule.id}</div>
-                    <div style="font-size: 0.95rem; color: #1f2937; font-weight: 700; line-height: 1.35;">${rule.title}</div>
-                </div>
-                <div style="font-size: 1.25rem; color: #9ca3af; padding-left: 10px;">›</div>
-            `;
-            resultsContainer.appendChild(item);
-        });
-        return;
-    }
-
     rulesList.forEach(rule => {
-        if (rule.chapter !== lastRenderedChapter) {
+        if (rule.chapter !== lastRenderedChapter && !showOnlyBookmarks) {
+            const isLockedChapter = !isUnlocked && isExpired && parseInt(rule.chapter, 10) > 2;
+
             const bigBanner = document.createElement('div');
             bigBanner.className = 'chapter-header';
             bigBanner.setAttribute('data-chapter', rule.chapter);
-            bigBanner.style.background = "#e6f4ea";
-            bigBanner.style.color = "#008751";
+            bigBanner.style.background = isLockedChapter ? "#fee2e2" : "#e6f4ea";
+            bigBanner.style.color = isLockedChapter ? "#991b1b" : "#008751";
             bigBanner.style.padding = "12px 16px";
             bigBanner.style.borderRadius = "8px";
             bigBanner.style.fontWeight = "800";
             bigBanner.style.fontSize = "1rem";
             bigBanner.style.marginTop = "25px";
             bigBanner.style.marginBottom = "10px";
-            bigBanner.style.borderLeft = "6px solid #008751";
-            bigBanner.innerText = `CHAPTER ${rule.chapter}: ${chapterTitles[rule.chapter] || 'PUBLIC SERVICE PROTOCOL'}`;
-            resultsContainer.appendChild(bigBanner);
+            bigBanner.style.borderLeft = isLockedChapter ? "6px solid #dc2626" : "6px solid #008751";
             
+            const lockIcon = isLockedChapter ? " 🔒 (LOCKED)" : "";
+            bigBanner.innerText = `CHAPTER ${rule.chapter}: ${chapterTitles[rule.chapter] || 'PUBLIC SERVICE PROTOCOL'}${lockIcon}`;
+            
+            resultsContainer.appendChild(bigBanner);
             lastRenderedChapter = rule.chapter;
         }
 
-        if (rule.section_title) {
+        if (rule.section_title && !showOnlyBookmarks) {
             const sectionBanner = document.createElement('div');
             sectionBanner.style.background = "#f0fdf4";
             sectionBanner.style.color = "#166534";
@@ -523,14 +669,14 @@ function displayResults(rulesList, selectedChapter, activeQuery) {
             sectionBanner.style.marginBottom = "12px";
             sectionBanner.style.borderBottom = "2px dashed #bbf7d0";
             sectionBanner.style.textTransform = "uppercase";
-            sectionBanner.innerText = `Section ${rule.section}: ${rule.section_title}`;
+            sectionBanner.innerText = `Section ${rule.section}:${rule.section_title}`;
             resultsContainer.appendChild(sectionBanner);
         }
 
         const card = document.createElement('div');
         card.className = 'rule-card';
         card.style.marginBottom = "12px";
-
+        
         let finalContent = rule.content;
         if (activeQuery !== "") {
             const cleanHighlightInput = activeQuery.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()'"?[\]\\]/g, " ");
@@ -552,7 +698,7 @@ function displayResults(rulesList, selectedChapter, activeQuery) {
             <div class="rule-header">
                 <span class="rule-id">PSR-${rule.id}</span>
                 <h3 class="rule-title">${rule.title}</h3>
-                <button onclick="toggleBookmark('${rule.id}')" style="background: none; border: none; font-size: 1.4rem; color: ${starColor}; cursor: pointer; padding-left: 10px;">
+                <button class="rule-star-btn" style="background: none; border: none; font-size: 1.4rem; color: ${starColor}; cursor: pointer; padding-left: 10px;">
                     ${starIcon}
                 </button>
             </div>
@@ -561,6 +707,12 @@ function displayResults(rulesList, selectedChapter, activeQuery) {
             </div>
             <p class="rule-content">${finalContent}</p>
         `;
+
+        const cardStarBtn = card.querySelector('.rule-star-btn');
+        if (cardStarBtn) {
+            cardStarBtn.addEventListener('click', () => toggleBookmark(rule.id));
+        }
+
         resultsContainer.appendChild(card);
     });
 }
@@ -568,20 +720,18 @@ function displayResults(rulesList, selectedChapter, activeQuery) {
 // ANDROID HARDWARE BACK BUTTON
 document.addEventListener("backbutton", function (event) {
     event.preventDefault();
+    
     if (bookmarkDetailRuleId !== null) {
         bookmarkDetailRuleId = null;
         showOnlyBookmarks = true;
+
         const btn = document.getElementById('bookmarkToggleBtn');
         if (btn) {
             btn.innerText = "⭐ Showing Saved";
             btn.style.background = "#b45309";
             btn.style.color = "#ffffff";
         }
-        const hudBanner = document.getElementById('bookmarkHudBanner');
-        if (hudBanner) {
-            hudBanner.classList.remove('splash-hidden-state');
-            hudBanner.style.display = "block";
-        }
+
         applyFilters();
         return;
     }   
@@ -594,125 +744,143 @@ document.addEventListener("backbutton", function (event) {
         applyFilters();
         return;
     }
+
     if (searchInput && searchInput.value.trim() !== "") {
         searchInput.value = "";
         applyFilters();
         return;
     }
+
     if (navigator.app && navigator.app.exitApp) {
         navigator.app.exitApp();
     }
-}, false);
+}, false);   
 
 // ============================================================
-// 🔒 STABLE PERMANENT DEVICE IDENTIFIER GENERATOR
+// 🔒 OFFLINE DEVICE LOCK & ACTIVATION KEY ENGINE
 // ============================================================
-function getPermanentDeviceId() {
-    // 1. Try native Cordova device plugin UUID first
-    if (window.device && window.device.uuid) {
-        return window.device.uuid;
-    }
-
-    // 2. Check if persistent ID was already assigned to this installation
-    let localId = localStorage.getItem('psr_persistent_device_id');
-    if (localId) {
-        return localId;
-    }
-
-    // 3. Generate a permanent unique hardware token once upon install
-    localId = 'DEV-' + Math.floor(100000 + Math.random() * 900000) + '-' + Date.now().toString(36);
-    localStorage.setItem('psr_persistent_device_id', localId);
-    return localId;
-}
+const ENGR_UDU_SECRET_SALT = 8423; 
 
 function generateDeviceFingerprint() {
-    const rawDeviceId = getPermanentDeviceId();
-    
-    // Hash the permanent ID into a clean 4-digit numerical seed
+    const signature = navigator.userAgent + (navigator.languages ? navigator.languages.join('') : 'en');
     let hash = 0;
-    for (let i = 0; i < rawDeviceId.length; i++) {
-        hash = (hash << 5) - hash + rawDeviceId.charCodeAt(i);
+    for (let i = 0; i < signature.length; i++) {
+        hash = (hash << 5) - hash + signature.charCodeAt(i);
         hash |= 0;
     }
-    return Math.abs(hash % 9000) + 1000; // Unchanging 4-digit seed (e.g., 5821)
+    return Math.abs(hash % 9000) + 1000;
 }
 
-// Secret Salt for Key Generation
-const ENGR_UDU_SECRET_SALT = 7;
-
 // ============================================================
-// 🔒 PERSISTENT HIGH-INTEGRITY INDEXEDDB TRIAL TRACKER SYSTEM
+// 🔒 PERSISTENT TRIAL MARKER
 // ============================================================
-const DB_NAME = "PSR_Tutor_Secure_Registry";
-const DB_VERSION = 1;
-const STORE_NAME = "license_markers";
+const TRIAL_MARKER_FOLDER = "PSR_Tutor_License";
+const TRIAL_MARKER_FILE = "trial.dat";
 
 function getPersistentTrialMarker(callback) {
-    if (!window.indexedDB) {
-        callback(localStorage.getItem('psr_trial_start'));
+    if (!window.resolveLocalFileSystemURL || !window.cordova || !cordova.file) {
+        callback(null);
         return;
     }
 
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-    
-    request.onupgradeneeded = function(event) {
-        const db = event.target.result;
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-            db.createObjectStore(STORE_NAME);
-        }
-    };
+    const rootPath = cordova.file.externalRootDirectory;
 
-    request.onsuccess = function(event) {
-        const db = event.target.result;
-        try {
-            const transaction = db.transaction([STORE_NAME], "readonly");
-            const store = transaction.objectStore(STORE_NAME);
-            const getReq = store.get("original_install_timestamp");
-            
-            getReq.onsuccess = function() {
-                callback(getReq.result || null);
-            };
-            getReq.onerror = function() { callback(null); };
-        } catch(e) {
+    window.resolveLocalFileSystemURL(
+        rootPath,
+        function (rootEntry) {
+            rootEntry.getDirectory(
+                TRIAL_MARKER_FOLDER,
+                { create: true },
+                function (folderEntry) {
+                    folderEntry.getFile(
+                        TRIAL_MARKER_FILE,
+                        { create: false },
+                        function (fileEntry) {
+                            fileEntry.file(
+                                function (file) {
+                                    const reader = new FileReader();
+
+                                    reader.onloadend = function () {
+                                        callback(this.result || null);
+                                    };
+
+                                    reader.onerror = function () {
+                                        callback(null);
+                                    };
+
+                                    reader.readAsText(file);
+                                },
+                                function () {
+                                    callback(null);
+                                }
+                            );
+                        },
+                        function () {
+                            callback(null);
+                        }
+                    );
+                },
+                function () {
+                    callback(null);
+                }
+            );
+        },
+        function () {
             callback(null);
         }
-    };
-
-    request.onerror = function() { callback(null); };
+    );
 }
 
 function createPersistentTrialMarker(timestamp, callback) {
-    if (!window.indexedDB) {
-        localStorage.setItem('psr_trial_start', timestamp);
-        if (callback) callback(true);
+    if (!window.resolveLocalFileSystemURL || !window.cordova || !cordova.file) {
+        callback(false);
         return;
     }
 
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    const rootPath = cordova.file.externalRootDirectory;
 
-    request.onupgradeneeded = function(event) {
-        const db = event.target.result;
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-            db.createObjectStore(STORE_NAME);
+    window.resolveLocalFileSystemURL(
+        rootPath,
+        function (rootEntry) {
+            rootEntry.getDirectory(
+                TRIAL_MARKER_FOLDER,
+                { create: true },
+                function (folderEntry) {
+                    folderEntry.getFile(
+                        TRIAL_MARKER_FILE,
+                        { create: true },
+                        function (fileEntry) {
+                            fileEntry.createWriter(
+                                function (writer) {
+                                    writer.onwriteend = function () {
+                                        callback(true);
+                                    };
+
+                                    writer.onerror = function () {
+                                        callback(false);
+                                    };
+
+                                    writer.write(String(timestamp));
+                                },
+                                function () {
+                                    callback(false);
+                                }
+                            );
+                        },
+                        function () {
+                            callback(false);
+                        }
+                    );
+                },
+                function () {
+                    callback(false);
+                }
+            );
+        },
+        function () {
+            callback(false);
         }
-    };
-
-    request.onsuccess = function(event) {
-        const db = event.target.result;
-        try {
-            const transaction = db.transaction([STORE_NAME], "readwrite");
-            const store = transaction.objectStore(STORE_NAME);
-            const putReq = store.put(String(timestamp), "original_install_timestamp");
-            
-            putReq.oncomplete = function() { if (callback) callback(true); };
-            putReq.onsuccess = function() { if (callback) callback(true); };
-            putReq.onerror = function() { if (callback) callback(false); };
-        } catch(e) {
-            if (callback) callback(false);
-        }
-    };
-
-    request.onerror = function() { if (callback) callback(false); };
+    );
 }
 
 function updateTrialReminder() {
@@ -724,104 +892,107 @@ function updateTrialReminder() {
         return;
     }
 
-    let trialStart = localStorage.getItem('psr_trial_start');
-    if (!trialStart) {
-        reminder.innerText = "⏳ Initializing Trial Period...";
+    const trialStart = Number(localStorage.getItem('psr_trial_start'));
+
+    if (!Number.isFinite(trialStart)) {
+        reminder.style.display = "none";
         return;
     }
 
-    const trialStartTime = Number(trialStart);
+    const TRIAL_DURATION = 8 * 24 * 60 * 60 * 1000; // Production: 8 days
     const now = Date.now();
-    
-    // ⏱️ 1-Hour Test Duration (3,600,000 ms)
-    const TRIAL_DURATION = 1 * 60 * 60 * 1000; 
-    const elapsed = now - trialStartTime;
+    const remaining = TRIAL_DURATION - (now - trialStart);
 
-    if (elapsed >= TRIAL_DURATION || localStorage.getItem('psr_trial_expired') === 'true') {
-        localStorage.setItem('psr_trial_expired', 'true');
-        reminder.innerText = "🔒 Trial Period Expired";
-        reminder.style.background = "#dc2626";
-        reminder.style.color = "#ffffff";
-    } else {
-        const minutesLeft = Math.ceil((TRIAL_DURATION - elapsed) / (60 * 1000));
-        reminder.innerText = `⏳ Test Trial: ${minutesLeft} minute(s) remaining`;
-        reminder.style.background = "#fffbeb";
-        reminder.style.color = "#b45309";
+    if (remaining <= 0) {
+        reminder.innerText = "🔒 Your trial period has expired. Please activate lifetime access.";
+        reminder.style.display = "block";
+        return;
     }
+
+    const daysRemaining = Math.ceil(remaining / (24 * 60 * 60 * 1000));
+
+    if (daysRemaining <= 3) {
+        reminder.innerText =
+            `⚠️ Only ${daysRemaining} day${daysRemaining === 1 ? "" : "s"} of trial access remaining.`;
+    } else {
+        reminder.innerText =
+            `⏳ ${daysRemaining} days of trial access remaining.`;
+    }
+
+    reminder.style.display = "block";
 }
 
 function checkAppLicenseStatus() {
     const isActivated = localStorage.getItem('barryPSR_premium_unlocked');
-    if (isActivated === "true") return;
 
-    const TRIAL_DURATION = 1 * 60 * 60 * 1000; // 1 hour test
+    if (isActivated === "true") {
+        return;
+    }
+
+    const TRIAL_DURATION = 8 * 24 * 60 * 60 * 1000; // Production: 8 days
     const now = Date.now();
 
     getPersistentTrialMarker(function (persistentMarker) {
         let trialStart = localStorage.getItem('psr_trial_start');
 
-        // Restore trial start timestamp if missing in local storage but present in IndexedDB
         if (!trialStart && persistentMarker) {
             trialStart = persistentMarker;
             localStorage.setItem('psr_trial_start', trialStart);
         }
 
-        // Initialize trial start ONLY IF IT DOES NOT EXIST
         if (!trialStart) {
             trialStart = now.toString();
             localStorage.setItem('psr_trial_start', trialStart);
-            createPersistentTrialMarker(trialStart, function (success) {
-                updateTrialReminder();
-            });
+
+            createPersistentTrialMarker(
+                trialStart,
+                function (success) {
+                    if (success) {
+                        console.log("PSR persistent trial marker created.");
+                    }
+                }
+            );
         }
 
         let trialStartTime = Number(trialStart);
 
-        // Prevent clock-rollback tampering
+        if (!Number.isFinite(trialStartTime) || trialStartTime > now) {
+            trialStart = now.toString();
+            trialStartTime = now;
+
+            localStorage.setItem('psr_trial_start', trialStart);
+
+            createPersistentTrialMarker(
+                trialStart,
+                function () {
+                    console.log("PSR persistent trial marker repaired.");
+                }
+            );
+        }
+
         const lastSeen = Number(localStorage.getItem('psr_last_seen_time') || 0);
+
         if (lastSeen > 0 && now < lastSeen) {
             localStorage.setItem('psr_trial_expired', 'true');
         }
+
         localStorage.setItem('psr_last_seen_time', now.toString());
 
         const expired = localStorage.getItem('psr_trial_expired') === 'true';
         const trialElapsed = now - trialStartTime;
 
-        updateTrialReminder();
-
         if (!expired && trialElapsed < TRIAL_DURATION) {
             return;
         }
 
-        // ============================================================
-        // TRIAL EXPIRED → SHOW APK LOCK OVERLAY
-        // ============================================================
-        localStorage.setItem('psr_trial_expired', 'true');
-        const seedCode = generateDeviceFingerprint();
-        const requestCode = `PSR-${seedCode}-UDU`;
-        const codeDisplay = document.getElementById('deviceRequestCode');
-        if (codeDisplay) codeDisplay.innerText = requestCode;
-
-        const lockOverlay = document.getElementById('activationLockOverlay');
-        if (lockOverlay) {
-            lockOverlay.classList.remove('splash-hidden-state');
-            lockOverlay.style.setProperty('display', 'flex', 'important'); 
-        }
+        triggerActivationLock();
     });
 }
-
-// Run checks on DOM Ready & Device Ready
-document.addEventListener("DOMContentLoaded", function () {
-    checkAppLicenseStatus();
-});
-
-document.addEventListener("deviceready", function () {
-    checkAppLicenseStatus();
-}, false);
 
 function validateLicenseKey() {
     const userInput = document.getElementById('activationKeyInput').value.trim();
     const seedCode = generateDeviceFingerprint();
+    
     const expectedCorrectKey = `KEY-${seedCode * ENGR_UDU_SECRET_SALT}-XYZ`;
 
     if (userInput === expectedCorrectKey) {
@@ -829,11 +1000,10 @@ function validateLicenseKey() {
         alert("🎉 Premium Lifetime Access successfully activated! Thank you for supporting Engr Udu.");
         
         const lockOverlay = document.getElementById('activationLockOverlay');
-        if (lockOverlay) lockOverlay.classList.add('splash-hidden-state');
-        
-        const reminder = document.getElementById('trialReminder');
-        if (reminder) reminder.style.display = "none";
-        location.reload();
+        if (lockOverlay) {
+            lockOverlay.classList.add('splash-hidden-state');
+            lockOverlay.style.display = 'none';
+        }
     } else {
         alert("❌ Invalid Activation Key! Please double-check your text or contact Engr Udu on WhatsApp.");
     }
@@ -846,12 +1016,32 @@ function launchWhatsAppOrderingIntents() {
     const seedCode = generateDeviceFingerprint();
     const requestCode = `PSR-${seedCode}-UDU`;
     const myPhoneNumber = "2348052538349";
-    const message = `Hello Engr Udu, I want to activate premium access for my PSR Tutor App. My Unique Request Code is: ${requestCode}`;
-    const completeUrl = "https://api.whatsapp.com/send?phone=" + myPhoneNumber + "&text=" + encodeURIComponent(message);
 
-    if (window.cordova && window.cordova.InAppBrowser) {
-        window.cordova.InAppBrowser.open(completeUrl, '_system');
-    } else {
-        window.open(completeUrl, '_system');
-    }
+    const message =
+        `Hello Engr Udu, I want to activate premium access for my PSR Tutor App. ` +
+        `My Unique Request Code is: ${requestCode}`;
+
+    const completeUrl =
+        "https://api.whatsapp.com/send?phone=" +
+        myPhoneNumber +
+        "&text=" +
+        encodeURIComponent(message);
+
+    console.log("Opening WhatsApp:", completeUrl);
+    window.location.href = completeUrl;
 }
+
+// ============================================================
+// END OF LICENSE & ACTIVATION SYSTEM
+// ============================================================
+
+// No test-only reset functions are included in the production version.
+// The 8-day trial is controlled by checkAppLicenseStatus() above.
+
+
+
+// TEMPORARY PREVIEW ONLY
+localStorage.removeItem('barryPSR_premium_unlocked');
+localStorage.removeItem('psr_trial_expired');
+localStorage.setItem('psr_trial_start', Date.now().toString());
+localStorage.setItem('psr_last_seen_time', Date.now().toString());

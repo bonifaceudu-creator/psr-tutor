@@ -6,7 +6,7 @@
     <title>Nigeria PSR Offline Search</title>
     <!-- Linked external stylesheet -->
     <link rel="stylesheet" href="style.css">
-    <style>
+        <style>
         /* Splash screen styling isolated from page body */
         #appSplashScreen {
             position: fixed;
@@ -14,24 +14,8 @@
             z-index: 99999;
             background: #1a1f2c;
         }
-
-        /* 🚀 THE COLLAPSE LAYOUT SPACE OVERRIDE: */
-        main {
-            margin-top: -15px !important; /* Pulls content cards up flush under sticky containers */
-            padding-top: 0 !important;
-        }
-
-        /* Clean styles for your persistent top layout trial display HUD */
-        .trial-reminder {
-            text-align: center;
-            font-size: 0.78rem;
-            font-weight: 700;
-            padding: 6px 12px;
-            border-radius: 6px;
-            margin-bottom: 8px;
-            transition: all 0.2s ease;
-        }
     </style>
+
 </head>
 <body>
 
@@ -84,13 +68,11 @@
         <p>Public Service Rules (Offline Index)</p>
     </header>
 
-    <!-- Main Content Area -->
+        <!-- Main Content Area -->
     <main>
         <!-- Sticky Header Container for Controls -->
         <div class="sticky-header-wrapper">
-            <!-- ⏱️ Dynamic Self-Starting 30-Day Trial Countdown HUD Holder Element -->
-            <div id="trialReminder" class="trial-reminder"></div> 
-            
+         <div id="trialReminder" class="trial-reminder"></div> 
             <div class="search-container">
                 <input 
                     type="text" 
@@ -104,13 +86,25 @@
                 <select id="chapterSelector" onchange="filterChapter()"></select>
                 <button id="bookmarkToggleBtn" onclick="toggleBookmarkFilter()" class="bookmark-filter-btn">⭐ Bookmarks</button>
                 <button onclick="clearFilter()" class="reset-btn">Reset</button>
+                <button
+    onclick="resetTrialForTesting()"
+    style="background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; padding:8px 10px; border-radius:6px; font-weight:700;"
+>
+    🧪 Reset Trial
+</button>
+                
             </div>
         </div>
 
-        <!-- Single Unique Results Count HUD Box -->
+        <!-- 🚀 THIS SHOULD BE THE ONLY UNIQUE RESULTS COUNT BOX LEFT: -->
+        
+        
         <div id="resultsCount" class="results-count"></div>
 
-        <!-- Polished Bookmark Context Banner HUD Layout -->
+
+
+
+        <!-- NEW Dynamic Bookmark Context Banner HUD Layout -->
         <div id="bookmarkHudBanner" class="bookmark-hud-banner" style="display: none;">
             <div class="hud-content">
                 <span class="hud-icon">⭐</span>
@@ -124,44 +118,53 @@
         <!-- Single Unique Rules Rendering Target Container -->
         <div id="resultsContainer" class="results-list"></div>
 
-        <!-- Premium Activation Security Lock Overlay -->
-        <div id="activationLockOverlay" class="lock-overlay splash-hidden-state">
-            <div class="lock-card">
-                <div class="lock-icon-wrap">🔒</div>
-                <h2>Premium Activation Required</h2>
-                <p class="lock-pitch">
-                    Unlock full lifetime access to <strong>All 18 Chapters</strong> of the Public Service Rules and your intelligent continuous narrowing search engine companion.
-                </p>
-                
-                <div class="price-badge" style="background: #00a86b;">₦2,500 Only</div>
 
-                <div class="code-box">
-                    <span class="code-label">YOUR UNIQUE REQUEST CODE:</span>
-                    <div id="deviceRequestCode" class="request-code-text">PSR-0000-UDU</div>
-                </div>
+            <!-- Premium Activation Security Lock Overlay -->
+    <div id="activationLockOverlay" class="lock-overlay splash-hidden-state">
+        <div class="lock-card">
+            <div class="lock-icon-wrap">🔒</div>
+            <h2>Premium Activation Required</h2>
+            <p class="lock-pitch">
+                Unlock full lifetime access to <strong>All 18 Chapters</strong> and <strong>Powerful Search Engine </strong>
+            </p>
+            
+            <div class="price-badge">₦1,500 Only</div>
 
-                <div class="input-group">
-                    <input 
-                        type="text" 
-                        id="activationKeyInput" 
-                        placeholder="Enter Activation Key here..." 
-                        class="lock-input"
-                    >
-                    <button onclick="validateLicenseKey()" class="activate-btn">Activate Lifetime Access</button>
-                </div>
-
-                <!-- Inline Action Button for Native Application Intent Protocol Routing -->
-                <button 
-                    id="whatsappPurchaseLink" 
-                    onclick="launchWhatsAppOrderingIntents()" 
-                    style="display: block; width: 100%; background: #25d366; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; text-align: center; cursor: pointer; box-sizing: border-box; text-decoration: none; margin-top: 10px;"
-                >
-                    💬 Order Key via WhatsApp
-                </button>
-                
-                <p class="lock-footer">Designed by Engr Udu | Official PSR Index Companion</p>
+            <div class="code-box">
+                <span class="code-label">YOUR UNIQUE REQUEST CODE:</span>
+                <div id="deviceRequestCode" class="request-code-text">PSR-0000-UDU</div>
             </div>
+
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="activationKeyInput" 
+                    placeholder="Enter Activation Key here..." 
+                    class="lock-input"
+                >
+                <button onclick="validateLicenseKey()" class="activate-btn">Activate Lifetime Access</button>
+            </div>
+
+                        <!-- CORRECTION: Replaced standard href link behavior with a direct inline onclick handler function -->
+            <button 
+                id="whatsappPurchaseLink" 
+                onclick="launchWhatsAppOrderingIntents()" 
+                style="display: block; width: 100%; background: #25d366; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; text-align: center; cursor: pointer; box-sizing: border-box; text-decoration: none; margin-top: 10px;"
+            >
+                💬 Order Key via WhatsApp
+            </button>
+          <button
+    onclick="closeActivationLock()"
+    style="display: block; width: 100%; background: #e5e7eb; color: #374151; border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; text-align: center; cursor: pointer; box-sizing: border-box; margin-top: 10px;"
+>
+    ← Return to Public Service Rules
+</button>
+            
+            <p class="lock-footer">Designed by Engr Udu</p>
         </div>
+    </div>
+
+        
     </main>
 
 <script>
