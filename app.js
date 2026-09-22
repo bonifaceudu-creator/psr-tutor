@@ -772,116 +772,7 @@ function generateDeviceFingerprint() {
 }
 
 // ============================================================
-// 🔒 PERSISTENT TRIAL MARKER
-// ============================================================
-const TRIAL_MARKER_FOLDER = "PSR_Tutor_License";
-const TRIAL_MARKER_FILE = "trial.dat";
 
-function getPersistentTrialMarker(callback) {
-    if (!window.resolveLocalFileSystemURL || !window.cordova || !cordova.file) {
-        callback(null);
-        return;
-    }
-
-    const rootPath = cordova.file.externalRootDirectory;
-
-    window.resolveLocalFileSystemURL(
-        rootPath,
-        function (rootEntry) {
-            rootEntry.getDirectory(
-                TRIAL_MARKER_FOLDER,
-                { create: true },
-                function (folderEntry) {
-                    folderEntry.getFile(
-                        TRIAL_MARKER_FILE,
-                        { create: false },
-                        function (fileEntry) {
-                            fileEntry.file(
-                                function (file) {
-                                    const reader = new FileReader();
-
-                                    reader.onloadend = function () {
-                                        callback(this.result || null);
-                                    };
-
-                                    reader.onerror = function () {
-                                        callback(null);
-                                    };
-
-                                    reader.readAsText(file);
-                                },
-                                function () {
-                                    callback(null);
-                                }
-                            );
-                        },
-                        function () {
-                            callback(null);
-                        }
-                    );
-                },
-                function () {
-                    callback(null);
-                }
-            );
-        },
-        function () {
-            callback(null);
-        }
-    );
-}
-
-function createPersistentTrialMarker(timestamp, callback) {
-    if (!window.resolveLocalFileSystemURL || !window.cordova || !cordova.file) {
-        callback(false);
-        return;
-    }
-
-    const rootPath = cordova.file.externalRootDirectory;
-
-    window.resolveLocalFileSystemURL(
-        rootPath,
-        function (rootEntry) {
-            rootEntry.getDirectory(
-                TRIAL_MARKER_FOLDER,
-                { create: true },
-                function (folderEntry) {
-                    folderEntry.getFile(
-                        TRIAL_MARKER_FILE,
-                        { create: true },
-                        function (fileEntry) {
-                            fileEntry.createWriter(
-                                function (writer) {
-                                    writer.onwriteend = function () {
-                                        callback(true);
-                                    };
-
-                                    writer.onerror = function () {
-                                        callback(false);
-                                    };
-
-                                    writer.write(String(timestamp));
-                                },
-                                function () {
-                                    callback(false);
-                                }
-                            );
-                        },
-                        function () {
-                            callback(false);
-                        }
-                    );
-                },
-                function () {
-                    callback(false);
-                }
-            );
-        },
-        function () {
-            callback(false);
-        }
-    );
-}
 
 function updateTrialReminder() {
     const reminder = document.getElementById('trialReminder');
@@ -932,61 +823,41 @@ function checkAppLicenseStatus() {
     const TRIAL_DURATION = 8 * 24 * 60 * 60 * 1000; // Production: 8 days
     const now = Date.now();
 
-    getPersistentTrialMarker(function (persistentMarker) {
-        let trialStart = localStorage.getItem('psr_trial_start');
+    let trialStart = localStorage.getItem('psr_trial_start');
 
-        if (!trialStart && persistentMarker) {
-            trialStart = persistentMarker;
-            localStorage.setItem('psr_trial_start', trialStart);
-        }
+    // First launch: create the local trial start time.
+    if (!trialStart) {
+        trialStart = now.toString();
+        localStorage.setItem('psr_trial_start', trialStart);
+    }
 
-        if (!trialStart) {
-            trialStart = now.toString();
-            localStorage.setItem('psr_trial_start', trialStart);
+    let trialStartTime = Number(trialStart);
 
-            createPersistentTrialMarker(
-                trialStart,
-                function (success) {
-                    if (success) {
-                        console.log("PSR persistent trial marker created.");
-                    }
-                }
-            );
-        }
+    // Protect against an invalid or future timestamp.
+    if (!Number.isFinite(trialStartTime) || trialStartTime > now) {
+        trialStart = now.toString();
+        trialStartTime = now;
+        localStorage.setItem('psr_trial_start', trialStart);
+    }
 
-        let trialStartTime = Number(trialStart);
+    // Detect clock rollback.
+    const lastSeen = Number(localStorage.getItem('psr_last_seen_time') || 0);
 
-        if (!Number.isFinite(trialStartTime) || trialStartTime > now) {
-            trialStart = now.toString();
-            trialStartTime = now;
+    if (lastSeen > 0 && now < lastSeen) {
+        localStorage.setItem('psr_trial_expired', 'true');
+    }
 
-            localStorage.setItem('psr_trial_start', trialStart);
+    localStorage.setItem('psr_last_seen_time', now.toString());
 
-            createPersistentTrialMarker(
-                trialStart,
-                function () {
-                    console.log("PSR persistent trial marker repaired.");
-                }
-            );
-        }
+    const expired = localStorage.getItem('psr_trial_expired') === 'true';
+    const trialElapsed = now - trialStartTime;
 
-        const lastSeen = Number(localStorage.getItem('psr_last_seen_time') || 0);
+    if (!expired && trialElapsed < TRIAL_DURATION) {
+        return;
+    }
 
-        if (lastSeen > 0 && now < lastSeen) {
-            localStorage.setItem('psr_trial_expired', 'true');
-        }
-
-        localStorage.setItem('psr_last_seen_time', now.toString());
-
-        const expired = localStorage.getItem('psr_trial_expired') === 'true';
-        const trialElapsed = now - trialStartTime;
-
-        if (!expired && trialElapsed < TRIAL_DURATION) {
-            return;
-        }
-
-        triggerActivationLock();
-    });
+    localStorage.setItem('psr_trial_expired', 'true');
+    triggerActivationLock();
 }
 
 function validateLicenseKey() {
@@ -1037,11 +908,3 @@ function launchWhatsAppOrderingIntents() {
 
 // No test-only reset functions are included in the production version.
 // The 8-day trial is controlled by checkAppLicenseStatus() above.
-
-
-
-// TEMPORARY PREVIEW ONLY
-localStorage.removeItem('barryPSR_premium_unlocked');
-localStorage.removeItem('psr_trial_expired');
-localStorage.setItem('psr_trial_start', Date.now().toString());
-localStorage.setItem('psr_last_seen_time', Date.now().toString());
