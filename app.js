@@ -211,6 +211,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 document.addEventListener("deviceready", function () {
     checkAppLicenseStatus();
+    updateTrialReminder();
 }, false);
 
 function buildDynamicDropdown() {
