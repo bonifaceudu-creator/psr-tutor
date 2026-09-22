@@ -159,7 +159,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const fallbackSplashTimer = setTimeout(() => {
         console.warn("Splash screen dismissed by safety fallback timer.");
         hideAppSplash();
-    }, 2500);
+    }, 6000);
 
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
@@ -199,8 +199,12 @@ document.addEventListener("DOMContentLoaded", function() {
             applyFilters();
 
             clearTimeout(fallbackSplashTimer);
-            hideAppSplash();
+
+          setTimeout(() => {
+          hideAppSplash();
+        }, 5000);
         })
+        
         .catch(error => {
             console.error("Initialization loop crash:", error);
             clearTimeout(fallbackSplashTimer);
