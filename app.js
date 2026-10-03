@@ -1001,7 +1001,7 @@ function showActivationMessage(type) {
         'invalid-code': {
             icon: '!',
             title: 'Invalid Access Code',
-            text: 'The code entered is not valid for this device or today’s activation date. Please check the code and try again.'
+            text: 'The code entered is not valid for this device. Please check the code and try again.'
         }
     };
 
