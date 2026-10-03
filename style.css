@@ -633,18 +633,111 @@ mark {
     text-align: center;
 }
 
-/* ============================================================
-   ACTIVATION MESSAGE WINDOW
-   ============================================================ */
+/* Floating referenced-rule reader */
+body.rule-reference-modal-open {
+    overflow: hidden;
+}
+
+.rule-reference-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(15, 23, 42, 0.68);
+    box-sizing: border-box;
+}
+
+.rule-reference-modal.rule-reference-modal-visible {
+    display: flex;
+}
+
+.rule-reference-card {
+    width: min(94vw, 620px);
+    max-height: 88vh;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.30);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.rule-reference-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 18px;
+    background: #008751;
+    color: #ffffff;
+}
+
+.rule-reference-header h2 {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.3;
+}
+
+.rule-reference-header p {
+    margin: 5px 0 0;
+    font-size: 0.74rem;
+    opacity: 0.9;
+}
+
+.rule-reference-close {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.rule-reference-content {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 18px;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: #374151;
+    white-space: pre-wrap;
+}
+
+.psr-rule-reference {
+    display: inline;
+    padding: 0 2px;
+    margin: 0;
+    border: none;
+    border-radius: 3px;
+    background: #e6f4ea;
+    color: #006b40;
+    font: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+
+
+/* Floating activation result message */
 .activation-message-modal {
     position: fixed;
     inset: 0;
-    z-index: 10020;
+    z-index: 1000000;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
-    background: rgba(15, 23, 42, 0.58);
+    box-sizing: border-box;
+    background: rgba(15, 23, 42, 0.62);
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
     opacity: 0;
@@ -661,12 +754,12 @@ mark {
 
 .activation-message-card {
     position: relative;
-    width: min(92vw, 390px);
+    width: min(92vw, 380px);
     box-sizing: border-box;
     padding: 28px 24px 24px;
     border-radius: 22px;
     background: #ffffff;
-    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
     text-align: center;
     transform: translateY(10px) scale(0.97);
     transition: transform 0.22s ease;
