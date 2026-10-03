@@ -109,31 +109,25 @@ function hideAppSplash() {
 }
 
 function getDeviceId() {
-    // Native Cordova builds: use the stable device UUID supplied by cordova-plugin-device.
+    // Production Android APK: use ONLY the stable UUID supplied by cordova-plugin-device.
+    // No browser/Acode fallback is used.
     if (window.device && window.device.uuid) {
-        const nativeId = String(window.device.uuid).trim();
-        if (nativeId) {
-            localStorage.setItem('psr_device_id', nativeId);
-            return nativeId;
-        }
+        return String(window.device.uuid).trim();
     }
 
-    // Browser/Acode fallback: create a local test identifier.
-    // The production APK uses the native device UUID above.
-    let localId = localStorage.getItem('psr_device_id');
-    if (!localId) {
-        if (window.crypto && window.crypto.randomUUID) {
-            localId = window.crypto.randomUUID();
-        } else {
-            localId = `WEB-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        }
-        localStorage.setItem('psr_device_id', localId);
-    }
-    return localId;
+    // Acode/browser preview does not have a native device UUID.
+    // Return an empty value rather than generating a different ID.
+    return '';
 }
 
 function getNumericDeviceId() {
     const deviceId = getDeviceId();
+
+    // No native device ID is available in Acode/browser preview.
+    if (!deviceId) {
+        return 0;
+    }
+
     let hash = 0;
 
     for (let i = 0; i < deviceId.length; i++) {
@@ -1003,7 +997,7 @@ function showActivationMessage(type) {
         'invalid-code': {
             icon: '!',
             title: 'Invalid Access Code',
-            text: 'The code entered is not valid for this device. Please check the code and try again.'
+            text: 'The code entered is not valid for this device or today’s activation date. Please check the code and try again.'
         }
     };
 
