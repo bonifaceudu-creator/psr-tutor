@@ -974,6 +974,8 @@ function checkAppLicenseStatus() {
     triggerActivationLock();
 }
 
+let activationUnlockPending = false;
+
 function showActivationMessage(type) {
     const modal = document.getElementById('activationMessageModal');
     const icon = document.getElementById('activationMessageIcon');
@@ -1001,7 +1003,7 @@ function showActivationMessage(type) {
         'invalid-code': {
             icon: '!',
             title: 'Invalid Access Code',
-            text: 'The code entered is not valid for this device. Please check the code and try again.'
+            text: 'The code entered is not valid for this device or today’s activation date. Please check the code and try again.'
         }
     };
 
@@ -1028,6 +1030,13 @@ function closeActivationMessage() {
         modal.classList.remove('visible');
         modal.setAttribute('aria-hidden', 'true');
     }
+
+    // For a successful activation, keep the confirmation over the lockscreen
+    // until the user dismisses it. Only then reveal the PSR document.
+    if (activationUnlockPending) {
+        activationUnlockPending = false;
+        closeActivationLock();
+    }
 }
 
 function validateLicenseKey() {
@@ -1051,7 +1060,9 @@ function validateLicenseKey() {
         localStorage.setItem('psr_last_seen_time', trialStartNow.toString());
         localStorage.removeItem('barryPSR_premium_unlocked');
 
-        closeActivationLock();
+        // Keep the lockscreen in place while the success message is shown.
+        // The PSR document will be revealed when the user taps Continue.
+        activationUnlockPending = true;
         updateTrialReminder();
         startTrialReminderTimer();
 
@@ -1063,7 +1074,9 @@ function validateLicenseKey() {
         localStorage.setItem('barryPSR_premium_unlocked', "true");
         localStorage.removeItem('psr_trial_expired');
 
-        closeActivationLock();
+        // Keep the lockscreen in place while the success message is shown.
+        // The PSR document will be revealed when the user taps Continue.
+        activationUnlockPending = true;
         updateTrialReminder();
 
         showActivationMessage('lifetime-success');
