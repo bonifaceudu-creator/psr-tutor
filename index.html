@@ -112,52 +112,80 @@
         <div id="resultsContainer" class="results-list"></div>
 
 
-            <!-- Premium Activation Security Lock Overlay -->
+    <!-- Access Code Lock Overlay -->
     <div id="activationLockOverlay" class="lock-overlay splash-hidden-state">
         <div class="lock-card">
-            <div class="lock-icon-wrap">🔒</div>
-            <h2>Premium Activation Required</h2>
+            <div class="lock-icon-wrap">🔐</div>
+            <h2>Access Code Required</h2>
             <p class="lock-pitch">
-                Unlock full lifetime access to <strong>All 18 Chapters</strong> and <strong>Powerful Search Engine </strong>
+                Enter the code supplied by Engr Udu to open all app features.
+                A <strong>Trial Code</strong> opens full access for <strong>7 days</strong>.
+                A <strong>Lifetime Code</strong> activates permanent access.
             </p>
-            
-            <div class="price-badge">₦5,000 Only</div>
 
             <div class="code-box">
-                <span class="code-label">YOUR UNIQUE REQUEST CODE:</span>
-                <div id="deviceRequestCode" class="request-code-text">PSR-0000-UDU</div>
+                <span class="code-label">YOUR DEVICE ID</span>
+                <div id="deviceRequestCode" class="request-code-text">Loading…</div>
+                <span class="code-label" style="margin-top: 8px;">TODAY'S DATE</span>
+                <div id="activationDateDisplay" class="request-code-text">Loading…</div>
             </div>
 
             <div class="input-group">
-                <input 
-                    type="text" 
-                    id="activationKeyInput" 
-                    placeholder="Enter Activation Key here..." 
+                <input
+                    type="text"
+                    id="activationKeyInput"
+                    placeholder="Enter access code here…"
                     class="lock-input"
+                    autocomplete="off"
+                    autocapitalize="characters"
+                    spellcheck="false"
                 >
-                <button onclick="validateLicenseKey()" class="activate-btn">Activate Lifetime Access</button>
+                <button onclick="validateLicenseKey()" class="activate-btn">
+                    Unlock App
+                </button>
             </div>
 
-                        <!-- CORRECTION: Replaced standard href link behavior with a direct inline onclick handler function -->
-            <button 
-                id="whatsappPurchaseLink" 
-                onclick="launchWhatsAppOrderingIntents()" 
+            <button
+                id="whatsappPurchaseLink"
+                onclick="launchWhatsAppOrderingIntents()"
                 style="display: block; width: 100%; background: #25d366; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; text-align: center; cursor: pointer; box-sizing: border-box; text-decoration: none; margin-top: 10px;"
             >
-                💬 Order Key via WhatsApp
+                💬 Request Code via WhatsApp
             </button>
-          <button
-    onclick="closeActivationLock()"
-    style="display: block; width: 100%; background: #e5e7eb; color: #374151; border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; text-align: center; cursor: pointer; box-sizing: border-box; margin-top: 10px;"
->
-    ← Return to Public Service Rules
-</button>
-            
-            <p class="lock-footer">Designed by Engr Udu</p>
+
+            <p class="lock-footer">
+                Designed by Engr Udu
+            </p>
         </div>
     </div>
 
-        
+    <!-- Floating PSR Rule Reference Window -->
+    <div
+        id="ruleReferenceModal"
+        class="rule-reference-modal"
+        aria-hidden="true"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ruleReferenceModalTitle"
+    >
+        <div class="rule-reference-card">
+            <div class="rule-reference-header">
+                <div>
+                    <h2 id="ruleReferenceModalTitle">Referenced PSR Rule</h2>
+                    <p id="ruleReferenceModalMeta"></p>
+                </div>
+                <button
+                    type="button"
+                    class="rule-reference-close"
+                    onclick="closeRuleReference()"
+                    aria-label="Close referenced rule"
+                >×</button>
+            </div>
+
+            <div id="ruleReferenceModalContent" class="rule-reference-content"></div>
+        </div>
+    </div>
+
     </main>
 
 <script>

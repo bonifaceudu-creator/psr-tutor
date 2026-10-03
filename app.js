@@ -108,13 +108,146 @@ function hideAppSplash() {
     }
 }
 
-function triggerActivationLock() {
-    const seedCode = generateDeviceFingerprint();
-    const requestCode = `PSR-${seedCode}-UDU`;
+function getDeviceId() {
+    // Native Cordova builds: use the stable device UUID supplied by cordova-plugin-device.
+    if (window.device && window.device.uuid) {
+        const nativeId = String(window.device.uuid).trim();
+        if (nativeId) {
+            localStorage.setItem('psr_device_id', nativeId);
+            return nativeId;
+        }
+    }
 
+    // Browser/Acode fallback: create a local test identifier.
+    // The production APK uses the native device UUID above.
+    let localId = localStorage.getItem('psr_device_id');
+    if (!localId) {
+        if (window.crypto && window.crypto.randomUUID) {
+            localId = window.crypto.randomUUID();
+        } else {
+            localId = `WEB-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        }
+        localStorage.setItem('psr_device_id', localId);
+    }
+    return localId;
+}
+
+function getNumericDeviceId() {
+    const deviceId = getDeviceId();
+    let hash = 0;
+
+    for (let i = 0; i < deviceId.length; i++) {
+        hash = ((hash * 31) + deviceId.charCodeAt(i)) | 0;
+    }
+
+    return Math.abs(hash) % 900000 + 100000;
+}
+
+function getISOWeekNumber(date) {
+    const tempDate = new Date(date.getTime());
+    tempDate.setHours(0, 0, 0, 0);
+
+    const day = tempDate.getDay() || 7;
+    tempDate.setDate(tempDate.getDate() + 4 - day);
+
+    const yearStart = new Date(tempDate.getFullYear(), 0, 1);
+    return Math.ceil((((tempDate - yearStart) / 86400000) + 1) / 7);
+}
+
+function getCurrentCodeFactors() {
+    const now = new Date();
+    const weekday = now.getDay() || 7; // Monday=1 ... Sunday=7
+    const weekNumber = getISOWeekNumber(now);
+    const dayOfMonth = now.getDate();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+
+    return {
+        weekday,
+        weekNumber,
+        dayOfMonth,
+        month,
+        year
+    };
+}
+
+function calculateAccessCode(type) {
+    const factors = getCurrentCodeFactors();
+    const deviceNumber = getNumericDeviceId();
+
+    // The two salts deliberately produce different code families.
+    const salt = type === "trial" ? 8 : 17;
+
+    // The code is derived only from device ID and the current date factors.
+    const rawValue =
+        salt *
+        factors.weekday *
+        factors.weekNumber *
+        factors.dayOfMonth *
+        deviceNumber;
+
+    const dateChecksum =
+        (factors.year * 10000) +
+        (factors.month * 100) +
+        factors.dayOfMonth;
+
+    const finalValue = Math.abs(
+        (rawValue + dateChecksum * salt) % 1000000000
+    ).toString().padStart(9, "0");
+
+    return type === "trial"
+        ? `TRIAL-${finalValue}-7D`
+        : `LIFE-${finalValue}-UDU`;
+}
+
+function getDeviceDisplayId() {
+    return getDeviceId();
+}
+
+function getTrialExpiryTime() {
+    const trialStart = Number(localStorage.getItem('psr_trial_start'));
+    if (!Number.isFinite(trialStart)) return 0;
+
+    return trialStart + (7 * 24 * 60 * 60 * 1000);
+}
+
+function isTrialCurrentlyActive() {
+    const expiry = getTrialExpiryTime();
+    if (!expiry) return false;
+
+    const now = Date.now();
+    const lastSeen = Number(localStorage.getItem('psr_last_seen_time') || 0);
+
+    if (lastSeen > 0 && now < lastSeen) {
+        localStorage.setItem('psr_trial_expired', 'true');
+        return false;
+    }
+
+    localStorage.setItem('psr_last_seen_time', now.toString());
+
+    const expired = now >= expiry;
+
+    if (expired) {
+        localStorage.setItem('psr_trial_expired', 'true');
+    }
+
+    return !expired;
+}
+
+function isAppAccessGranted() {
+    return localStorage.getItem('barryPSR_premium_unlocked') === "true"
+        || isTrialCurrentlyActive();
+}
+
+function triggerActivationLock() {
     const codeDisplay = document.getElementById('deviceRequestCode');
     if (codeDisplay) {
-        codeDisplay.innerText = requestCode;
+        codeDisplay.innerText = getDeviceDisplayId();
+    }
+
+    const dateDisplay = document.getElementById('activationDateDisplay');
+    if (dateDisplay) {
+        dateDisplay.innerText = new Date().toLocaleDateString();
     }
 
     const lockOverlay = document.getElementById('activationLockOverlay');
@@ -132,22 +265,7 @@ function closeActivationLock() {
         lockOverlay.style.display = 'none';
     }
 
-    // Return to the normal document view.
-    const selector = document.getElementById('chapterSelector');
-    const searchInput = document.getElementById('searchInput');
-
-    if (selector) selector.value = "";
-    if (searchInput) searchInput.value = "";
-
-    showOnlyBookmarks = false;
-    bookmarkDetailRuleId = null;
-
     applyFilters();
-
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-    });
 }
 
 // ============================================================
@@ -198,6 +316,10 @@ document.addEventListener("DOMContentLoaded", function() {
             buildDynamicDropdown();
             applyFilters();
 
+            if (!window.psrAccessGateInitialized) {
+                initializeAccessGate();
+            }
+
             clearTimeout(fallbackSplashTimer);
 
           setTimeout(() => {
@@ -213,10 +335,29 @@ document.addEventListener("DOMContentLoaded", function() {
  
 });
 
-document.addEventListener("deviceready", function () {
+function initializeAccessGate() {
+    if (window.psrAccessGateInitialized) return;
+    window.psrAccessGateInitialized = true;
+
+    getDeviceId();
+    startTrialReminderTimer();
     checkAppLicenseStatus();
-    updateTrialReminder();
+}
+
+document.addEventListener("deviceready", function () {
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initializeAccessGate, { once: true });
+    } else {
+        initializeAccessGate();
+    }
 }, false);
+
+document.addEventListener("DOMContentLoaded", function () {
+    // Browser/Acode preview fallback and native startup synchronization.
+    if (window.device && window.device.uuid) {
+        initializeAccessGate();
+    }
+});
 
 function buildDynamicDropdown() {
     const selector = document.getElementById('chapterSelector');
@@ -252,11 +393,7 @@ function buildDynamicDropdown() {
         const option = document.createElement('option');
         option.value = ch;
 
-        const isUnlocked = localStorage.getItem('barryPSR_premium_unlocked') === "true";
-        const unlockedChapterLimit = isUnlocked ? 18 : getUnlockedChapterLimit();
-        const isLocked = !isUnlocked && parseInt(ch, 10) > unlockedChapterLimit;
-
-        option.innerText = `Ch. ${ch}: ${chapterTitles[ch] || 'Public Service Protocol'}${isLocked ? ' 🔒' : ''}`;
+        option.innerText = `Ch. ${ch}: ${chapterTitles[ch] || 'Public Service Protocol'}`;
 
         selector.appendChild(option);
     });
@@ -265,34 +402,8 @@ function buildDynamicDropdown() {
 // ============================================================
 // CONTINUOUS NARROWING AND-LOGIC SEARCH FILTERS
 // ============================================================
-function getUnlockedChapterLimit() {
-    const trialStart = Number(localStorage.getItem('psr_trial_start'));
-
-    // If no valid trial start exists, keep the initial access level.
-    if (!Number.isFinite(trialStart)) {
-        return 3;
-    }
-
-    const TRIAL_DAY = 24 * 60 * 60 * 1000; // Production: 1 day = 24 hours
-    const elapsed = Date.now() - trialStart;
-
-    const dayNumber = Math.floor(elapsed / TRIAL_DAY) + 1;
-
-    if (dayNumber === 1) return 3;
-    if (dayNumber === 2) return 6;
-    if (dayNumber === 3) return 9;
-    if (dayNumber === 4) return 12;
-    if (dayNumber === 5) return 15;
-    if (dayNumber === 6) return 18;
-    if (dayNumber === 7) return 18;
-
-    // Day 8 onward
-    return 2;
-}
-
 
 function applyFilters() {
-    const isUnlocked = localStorage.getItem('barryPSR_premium_unlocked') === "true";
 
     const selectedChapter = document.getElementById('chapterSelector')
         ? document.getElementById('chapterSelector').value
@@ -300,19 +411,6 @@ function applyFilters() {
 
     const searchInput = document.getElementById('searchInput');
     const queryInput = searchInput ? searchInput.value.toLowerCase().trim() : "";
-
-    // Determine the highest chapter currently available.
-    const unlockedChapterLimit = isUnlocked ? 18 : getUnlockedChapterLimit();
-
-    // If the selected chapter is currently locked, show the activation screen.
-    if (
-        !isUnlocked &&
-        selectedChapter &&
-        parseInt(selectedChapter, 10) > unlockedChapterLimit
-    ) {
-        triggerActivationLock();
-        return;
-    }
 
     const queryCleaned = queryInput.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()'"?[\]\\]/g, " ");
     const queryTokens = queryCleaned.split(/\s+/).filter(token => token.length > 0);
@@ -322,11 +420,6 @@ function applyFilters() {
         const matchesBookmarkState = !showOnlyBookmarks || bookmarkedRuleIds.includes(rule.id);
         
         if (!matchesChapter || !matchesBookmarkState) return false;
-
-        // Only show chapters currently unlocked for this user.
-        if (!isUnlocked && parseInt(rule.chapter, 10) > unlockedChapterLimit) {
-            return false;
-        }
 
         if (queryInput === "") return true;
 
@@ -434,16 +527,8 @@ function toggleBookmarkFilter() {
 
 function openBookmarkedRule(ruleId) {
     const isUnlocked = localStorage.getItem('barryPSR_premium_unlocked') === "true";
-    const isExpired = localStorage.getItem('psr_trial_expired') === 'true';
-
     const rule = publicServiceRules.find(r => r.id === ruleId);
     if (!rule) return;
-
-    // Check if user is attempting to open a saved Chapter 3+ rule after trial expiration
-    if (!isUnlocked && isExpired && parseInt(rule.chapter, 10) > 2) {
-        triggerActivationLock();
-        return;
-    }
 
     bookmarkDetailRuleId = ruleId;
     showOnlyBookmarks = false;
@@ -506,6 +591,105 @@ function clearFilter() {
 }
 
 // ============================================================
+// 🔗 CLICKABLE PSR RULE REFERENCES
+// ============================================================
+let ruleReferenceReturnScrollY = 0;
+
+function openRuleReference(ruleId) {
+    const targetRule = publicServiceRules.find(rule => rule.id === String(ruleId));
+
+    ruleReferenceReturnScrollY = window.scrollY;
+
+    const modal = document.getElementById('ruleReferenceModal');
+    const title = document.getElementById('ruleReferenceModalTitle');
+    const meta = document.getElementById('ruleReferenceModalMeta');
+    const content = document.getElementById('ruleReferenceModalContent');
+
+    if (!modal || !title || !meta || !content) return;
+
+    if (!targetRule) {
+        title.innerText = `Referenced Rule ${ruleId}`;
+        meta.innerText = "Reference not found in the current PSR database";
+        content.textContent =
+            `The document references Rule ${ruleId}, but that rule number is not present in the current psr_data.json database. The original PSR text has been preserved unchanged.`;
+    } else {
+        title.innerText = `PSR-${targetRule.id} — ${targetRule.title}`;
+        meta.innerText =
+            `Chapter ${targetRule.chapter} | Section ${targetRule.section} | Rule ${targetRule.rule}`;
+
+        content.textContent = targetRule.content;
+    }
+
+    modal.classList.add('rule-reference-modal-visible');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('rule-reference-modal-open');
+}
+
+function closeRuleReference() {
+    const modal = document.getElementById('ruleReferenceModal');
+
+    if (!modal) return;
+
+    modal.classList.remove('rule-reference-modal-visible');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('rule-reference-modal-open');
+
+    requestAnimationFrame(() => {
+        window.scrollTo({
+            top: ruleReferenceReturnScrollY,
+            behavior: 'auto'
+        });
+    });
+}
+
+function makeRuleReferencesClickable(html) {
+    const rulePattern = /\bRules?\s+(\d{6,7})\b/gi;
+
+    return String(html || "").replace(
+        rulePattern,
+        (match, ruleId) =>
+            `<button type="button" class="psr-rule-reference" onclick="openRuleReference('${ruleId}')">${match}</button>`
+    );
+}
+
+function highlightSearchTerms(html, activeQuery) {
+    if (!activeQuery) return html;
+
+    const tokens = activeQuery
+        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()'"?[\]\\]/g, " ")
+        .split(/\s+/)
+        .filter(t => t.length >= 3);
+
+    if (!tokens.length) return html;
+
+    const placeholders = [];
+    let safeHtml = html.replace(
+        /<button\b[^>]*class="psr-rule-reference"[^>]*>.*?<\/button>/gi,
+        match => {
+            const index = placeholders.length;
+            placeholders.push(match);
+            return `\uE000${index}\uE001`;
+        }
+    );
+
+    tokens.forEach(token => {
+        try {
+            const regex = new RegExp(`(${escapeRegExp(token)})`, 'gi');
+            safeHtml = safeHtml.replace(
+                regex,
+                `<mark style="background: #ffeb3b; padding: 0; border-radius: 2px;">$1</mark>`
+            );
+        } catch (e) {}
+    });
+
+    placeholders.forEach((placeholder, index) => {
+        safeHtml = safeHtml.replace(`\uE000${index}\uE001`, placeholder);
+    });
+
+    return safeHtml;
+}
+
+// ============================================================
 // UI DOM CARD INJECTION RENDER SYSTEM
 // ============================================================
 function displayResults(rulesList, selectedChapter, activeQuery) {
@@ -517,9 +701,6 @@ function displayResults(rulesList, selectedChapter, activeQuery) {
     resultsContainer.innerHTML = "";
     countContainer.innerText = `Found ${rulesList.length} rule(s)`;
 
-    const isUnlocked = localStorage.getItem('barryPSR_premium_unlocked') === "true";
-    const isExpired = localStorage.getItem('psr_trial_expired') === 'true';
-
     // Handle Empty Search/Bookmark States
     if (rulesList.length === 0) {
         if (showOnlyBookmarks) {
@@ -528,15 +709,6 @@ function displayResults(rulesList, selectedChapter, activeQuery) {
                     <span style="font-size: 3rem;">⭐</span>
                     <h3 style="margin-top: 10px; font-weight: 800;">Your Reference Vault is Empty</h3>
                     <p style="font-size: 0.9rem; color: #666; max-width: 300px; margin: 8px auto 0;">Tap the star icon (☆) on any Public Service Rule card across chapters to pin vital records right here for instant offline reference.</p>
-                </div>
-            `;
-        } else if (!isUnlocked && isExpired && selectedChapter && parseInt(selectedChapter, 10) > 2) {
-            resultsContainer.innerHTML = `
-                <div style="text-align: center; padding: 30px; color: #b91c1c;">
-                    <span style="font-size: 2.5rem;">🔒</span>
-                    <h3 style="margin-top: 8px; font-weight: 800;">Chapter ${selectedChapter} is Locked</h3>
-                    <p style="font-size: 0.85rem; color: #555; margin-top: 4px;">Your trial has ended. Activate full access to view Chapter ${selectedChapter}.</p>
-                    <button onclick="triggerActivationLock()" style="margin-top: 12px; background: #008751; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: pointer;">Activate Access</button>
                 </div>
             `;
         } else {
@@ -561,8 +733,6 @@ function displayResults(rulesList, selectedChapter, activeQuery) {
         bookmarkWrapper.style.marginTop = '10px';
 
         rulesList.forEach(rule => {
-            const isLockedRule = !isUnlocked && isExpired && parseInt(rule.chapter, 10) > 2;
-
             const listItem = document.createElement('div');
             listItem.className = 'bookmark-list-item';
             listItem.style.background = '#ffffff';
@@ -575,12 +745,10 @@ function displayResults(rulesList, selectedChapter, activeQuery) {
             listItem.style.cursor = 'pointer';
             listItem.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
 
-            const lockBadge = isLockedRule ? `<span style="font-size: 0.8rem; margin-left: 6px;">🔒</span>` : ``;
-
             listItem.innerHTML = `
                 <div class="bookmark-text-area" style="flex: 1; padding-right: 10px; text-align: left;">
                     <div style="font-size: 0.75rem; font-weight: 700; color: #b45309; text-transform: uppercase;">
-                        PSR-${rule.id} &bull; Ch. ${rule.chapter}${lockBadge}
+                        PSR-${rule.id} &bull; Ch. ${rule.chapter}
                     </div>
                     <div style="font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-top: 2px; line-height: 1.3;">
                         ${rule.title}
@@ -640,24 +808,20 @@ function displayResults(rulesList, selectedChapter, activeQuery) {
 
     rulesList.forEach(rule => {
         if (rule.chapter !== lastRenderedChapter && !showOnlyBookmarks) {
-            const isLockedChapter = !isUnlocked && isExpired && parseInt(rule.chapter, 10) > 2;
-
             const bigBanner = document.createElement('div');
             bigBanner.className = 'chapter-header';
             bigBanner.setAttribute('data-chapter', rule.chapter);
-            bigBanner.style.background = isLockedChapter ? "#fee2e2" : "#e6f4ea";
-            bigBanner.style.color = isLockedChapter ? "#991b1b" : "#008751";
+            bigBanner.style.background = "#e6f4ea";
+            bigBanner.style.color = "#008751";
             bigBanner.style.padding = "12px 16px";
             bigBanner.style.borderRadius = "8px";
             bigBanner.style.fontWeight = "800";
             bigBanner.style.fontSize = "1rem";
             bigBanner.style.marginTop = "25px";
             bigBanner.style.marginBottom = "10px";
-            bigBanner.style.borderLeft = isLockedChapter ? "6px solid #dc2626" : "6px solid #008751";
-            
-            const lockIcon = isLockedChapter ? " 🔒 (LOCKED)" : "";
-            bigBanner.innerText = `CHAPTER ${rule.chapter}: ${chapterTitles[rule.chapter] || 'PUBLIC SERVICE PROTOCOL'}${lockIcon}`;
-            
+            bigBanner.style.borderLeft = "6px solid #008751";
+            bigBanner.innerText = `CHAPTER ${rule.chapter}: ${chapterTitles[rule.chapter] || 'PUBLIC SERVICE PROTOCOL'}`;
+
             resultsContainer.appendChild(bigBanner);
             lastRenderedChapter = rule.chapter;
         }
@@ -682,19 +846,9 @@ function displayResults(rulesList, selectedChapter, activeQuery) {
         card.className = 'rule-card';
         card.style.marginBottom = "12px";
         
-        let finalContent = rule.content;
-        if (activeQuery !== "") {
-            const cleanHighlightInput = activeQuery.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()'"?[\]\\]/g, " ");
-            const highlightTokens = cleanHighlightInput.split(/\s+/).filter(t => t.length >= 3);
-            
-            highlightTokens.forEach(token => {
-                try {
-                    const regex = new RegExp(`(${escapeRegExp(token)})`, 'gi');
-                    finalContent = finalContent.replace(regex, `<mark style="background: #ffeb3b; padding: 0; border-radius: 2px;">$1</mark>`);
-                } catch(e) {}
-            });
-        }
-        
+        const linkedContent = makeRuleReferencesClickable(rule.content);
+        const finalContent = highlightSearchTerms(linkedContent, activeQuery);
+
         const isStarred = bookmarkedRuleIds.includes(rule.id);
         const starIcon = isStarred ? "★" : "☆";
         const starColor = isStarred ? "#b45309" : "#a1a1aa";
@@ -726,6 +880,13 @@ function displayResults(rulesList, selectedChapter, activeQuery) {
 document.addEventListener("backbutton", function (event) {
     event.preventDefault();
     
+    const ruleReferenceModal = document.getElementById('ruleReferenceModal');
+    if (ruleReferenceModal &&
+        ruleReferenceModal.classList.contains('rule-reference-modal-visible')) {
+        closeRuleReference();
+        return;
+    }
+
     if (bookmarkDetailRuleId !== null) {
         bookmarkDetailRuleId = null;
         showOnlyBookmarks = true;
@@ -761,24 +922,6 @@ document.addEventListener("backbutton", function (event) {
     }
 }, false);   
 
-// ============================================================
-// 🔒 OFFLINE DEVICE LOCK & ACTIVATION KEY ENGINE
-// ============================================================
-const ENGR_UDU_SECRET_SALT = 8423; 
-
-function generateDeviceFingerprint() {
-    const signature = navigator.userAgent + (navigator.languages ? navigator.languages.join('') : 'en');
-    let hash = 0;
-    for (let i = 0; i < signature.length; i++) {
-        hash = (hash << 5) - hash + signature.charCodeAt(i);
-        hash |= 0;
-    }
-    return Math.abs(hash % 9000) + 1000;
-}
-
-// ============================================================
-
-
 function updateTrialReminder() {
     const reminder = document.getElementById('trialReminder');
     if (!reminder) return;
@@ -788,114 +931,116 @@ function updateTrialReminder() {
         return;
     }
 
-    const trialStart = Number(localStorage.getItem('psr_trial_start'));
+    const expiry = getTrialExpiryTime();
 
-    if (!Number.isFinite(trialStart)) {
-        reminder.style.display = "none";
-        return;
-    }
-
-    const TRIAL_DURATION = 8 * 24 * 60 * 60 * 1000; // Production: 8 days
-    const now = Date.now();
-    const remaining = TRIAL_DURATION - (now - trialStart);
-
-    if (remaining <= 0) {
-        reminder.innerText = "🔒 Your trial period has expired. Please activate lifetime access.";
+    if (!expiry) {
+        reminder.innerText = "🔐 Enter your access code to start the 7-day trial.";
         reminder.style.display = "block";
         return;
     }
 
-    const daysRemaining = Math.ceil(remaining / (24 * 60 * 60 * 1000));
+    const remaining = expiry - Date.now();
 
-    if (daysRemaining <= 3) {
-        reminder.innerText =
-            `⚠️ Only ${daysRemaining} day${daysRemaining === 1 ? "" : "s"} of trial access remaining.`;
-    } else {
-        reminder.innerText =
-            `⏳ ${daysRemaining} days of trial access remaining.`;
+    if (remaining <= 0) {
+        localStorage.setItem('psr_trial_expired', 'true');
+        reminder.innerText = "🔒 Your 7-day trial has expired. Please activate lifetime access.";
+        reminder.style.display = "block";
+
+        const lockOverlay = document.getElementById('activationLockOverlay');
+        const lockIsVisible = lockOverlay &&
+            !lockOverlay.classList.contains('splash-hidden-state');
+
+        if (!lockIsVisible) {
+            triggerActivationLock();
+        }
+        return;
     }
 
+    const totalSeconds = Math.floor(remaining / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    reminder.innerText =
+        `⏳ Trial remaining: ${days}d ${hours}h ${minutes}m ${seconds}s`;
     reminder.style.display = "block";
 }
 
+function startTrialReminderTimer() {
+    if (window.psrTrialReminderTimer) {
+        clearInterval(window.psrTrialReminderTimer);
+    }
+
+    window.psrTrialReminderTimer = setInterval(updateTrialReminder, 1000);
+    updateTrialReminder();
+}
+
 function checkAppLicenseStatus() {
-    const isActivated = localStorage.getItem('barryPSR_premium_unlocked');
-
-    if (isActivated === "true") {
+    if (localStorage.getItem('barryPSR_premium_unlocked') === "true") {
+        updateTrialReminder();
         return;
     }
 
-    const TRIAL_DURATION = 8 * 24 * 60 * 60 * 1000; // Production: 8 days
-    const now = Date.now();
-
-    let trialStart = localStorage.getItem('psr_trial_start');
-
-    // First launch: create the local trial start time.
-    if (!trialStart) {
-        trialStart = now.toString();
-        localStorage.setItem('psr_trial_start', trialStart);
-    }
-
-    let trialStartTime = Number(trialStart);
-
-    // Protect against an invalid or future timestamp.
-    if (!Number.isFinite(trialStartTime) || trialStartTime > now) {
-        trialStart = now.toString();
-        trialStartTime = now;
-        localStorage.setItem('psr_trial_start', trialStart);
-    }
-
-    // Detect clock rollback.
-    const lastSeen = Number(localStorage.getItem('psr_last_seen_time') || 0);
-
-    if (lastSeen > 0 && now < lastSeen) {
-        localStorage.setItem('psr_trial_expired', 'true');
-    }
-
-    localStorage.setItem('psr_last_seen_time', now.toString());
-
-    const expired = localStorage.getItem('psr_trial_expired') === 'true';
-    const trialElapsed = now - trialStartTime;
-
-    if (!expired && trialElapsed < TRIAL_DURATION) {
+    if (isTrialCurrentlyActive()) {
+        updateTrialReminder();
         return;
     }
 
-    localStorage.setItem('psr_trial_expired', 'true');
     triggerActivationLock();
 }
 
 function validateLicenseKey() {
-    const userInput = document.getElementById('activationKeyInput').value.trim();
-    const seedCode = generateDeviceFingerprint();
-    
-    const expectedCorrectKey = `KEY-${seedCode * ENGR_UDU_SECRET_SALT}-XYZ`;
+    const userInput = document.getElementById('activationKeyInput');
+    if (!userInput) return;
 
-    if (userInput === expectedCorrectKey) {
-        localStorage.setItem('barryPSR_premium_unlocked', "true");
-        alert("🎉 Premium Lifetime Access successfully activated! Thank you for supporting Engr Udu.");
-        
-        const lockOverlay = document.getElementById('activationLockOverlay');
-        if (lockOverlay) {
-            lockOverlay.classList.add('splash-hidden-state');
-            lockOverlay.style.display = 'none';
-        }
-    } else {
-        alert("❌ Invalid Activation Key! Please double-check your text or contact Engr Udu on WhatsApp.");
+    const enteredCode = userInput.value.trim().toUpperCase();
+
+    const expectedTrialCode = calculateAccessCode("trial");
+    const expectedLifetimeCode = calculateAccessCode("lifetime");
+
+    if (enteredCode === expectedTrialCode) {
+        const trialStartNow = Date.now();
+        localStorage.setItem('psr_trial_start', trialStartNow.toString());
+        localStorage.setItem('psr_trial_expired', 'false');
+        localStorage.setItem('psr_last_seen_time', trialStartNow.toString());
+        localStorage.removeItem('barryPSR_premium_unlocked');
+
+        closeActivationLock();
+        updateTrialReminder();
+        startTrialReminderTimer();
+
+        alert("✅ 7-day trial access activated.");
+        return;
     }
+
+    if (enteredCode === expectedLifetimeCode) {
+        localStorage.setItem('barryPSR_premium_unlocked', "true");
+        localStorage.removeItem('psr_trial_expired');
+
+        closeActivationLock();
+        updateTrialReminder();
+
+        alert("🎉 Premium Lifetime Access successfully activated! Thank you for supporting Engr Udu.");
+        return;
+    }
+
+    alert("❌ Invalid access code. Please verify the code and today's date.");
 }
 
 // ============================================================
 // 🚀 BULLETPROOF UNIVERSAL WHATSAPP LAUNCH ENGINE
 // ============================================================
 function launchWhatsAppOrderingIntents() {
-    const seedCode = generateDeviceFingerprint();
-    const requestCode = `PSR-${seedCode}-UDU`;
+    const deviceId = getDeviceDisplayId();
+    const today = new Date().toLocaleDateString();
+
     const myPhoneNumber = "2348052538349";
 
     const message =
-        `Hello Engr Udu, I want to activate premium access for my PSR Tutor App. ` +
-        `My Unique Request Code is: ${requestCode}`;
+        `Hello Engr Udu, I want an access code for my PSR Tutor App. ` +
+        `My Device ID is: ${deviceId}. ` +
+        `Today's date is: ${today}.`;
 
     const completeUrl =
         "https://api.whatsapp.com/send?phone=" +
@@ -908,8 +1053,8 @@ function launchWhatsAppOrderingIntents() {
 }
 
 // ============================================================
-// END OF LICENSE & ACTIVATION SYSTEM
+// END OF ACCESS & ACTIVATION SYSTEM
 // ============================================================
 
 // No test-only reset functions are included in the production version.
-// The 8-day trial is controlled by checkAppLicenseStatus() above.
+// The 7-day trial is controlled locally by checkAppLicenseStatus() above.

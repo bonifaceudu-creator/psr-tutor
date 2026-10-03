@@ -2,7 +2,7 @@
 
 <widget
     id="com.barry.psrengine"
-    version="1.0.0"
+    version="1.1.0"
     xmlns="http://www.w3.org/ns/widgets"
     xmlns:cdv="http://cordova.apache.org/ns/1.0">
 
@@ -55,6 +55,8 @@
     <preference
         name="FadeSplashScreen"
         value="false" />
+
+    <plugin name="cordova-plugin-device" spec="^2.1.0" />
 
     <!-- Normal application icon -->
     <icon src="icon-512.png" />
