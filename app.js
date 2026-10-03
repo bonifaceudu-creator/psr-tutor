@@ -175,33 +175,22 @@ function calculateAccessCode(type) {
     const factors = getCurrentCodeFactors();
     const deviceNumber = getNumericDeviceId();
 
-    // The two salts deliberately produce different code families.
-    const salt = type === "trial" ? 8 : 17;
+    // Trial salt = 8. Lifetime salt = 15.
+    // EXACT FORMULA:
+    // SALT × ISO weekday × ISO week number × numeric device ID
+    const salt = type === "trial" ? 8 : 15;
 
-    // The code is derived only from device ID and the current date factors.
-    const rawValue =
+    return String(
         salt *
         factors.weekday *
         factors.weekNumber *
-        factors.dayOfMonth *
-        deviceNumber;
-
-    const dateChecksum =
-        (factors.year * 10000) +
-        (factors.month * 100) +
-        factors.dayOfMonth;
-
-    const finalValue = Math.abs(
-        (rawValue + dateChecksum * salt) % 1000000000
-    ).toString().padStart(9, "0");
-
-    return type === "trial"
-        ? `TRIAL-${finalValue}-7D`
-        : `LIFE-${finalValue}-UDU`;
+        deviceNumber
+    );
 }
 
 function getDeviceDisplayId() {
-    return getDeviceId();
+    // Display the numeric device identifier used in the activation formula.
+    return String(getNumericDeviceId());
 }
 
 function getTrialExpiryTime() {
