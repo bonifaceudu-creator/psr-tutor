@@ -112,80 +112,59 @@
         <div id="resultsContainer" class="results-list"></div>
 
 
-    <!-- Access Code Lock Overlay -->
-    <div id="activationLockOverlay" class="lock-overlay splash-hidden-state">
+            <!-- Premium Activation Security Lock Overlay -->
+    <div id="activationLockOverlay" class="lock-overlay">
         <div class="lock-card">
-            <div class="lock-icon-wrap">🔐</div>
-            <h2>Access Code Required</h2>
+            <div class="lock-icon-wrap">🔒</div>
+            <h2>Premium Activation Required</h2>
             <p class="lock-pitch">
-                Enter the code supplied by Engr Udu to open all app features.
-                A <strong>Trial Code</strong> opens full access for <strong>7 days</strong>.
-                A <strong>Lifetime Code</strong> activates permanent access.
+                Unlock full lifetime access to <strong>All 18 Chapters</strong> and <strong>Powerful Search Engine </strong>
             </p>
+            
+            <div class="price-badge">₦5,000 Only</div>
 
             <div class="code-box">
-                <span class="code-label">YOUR DEVICE ID</span>
-                <div id="deviceRequestCode" class="request-code-text">Loading…</div>
-                <span class="code-label" style="margin-top: 8px;">TODAY'S DATE</span>
-                <div id="activationDateDisplay" class="request-code-text">Loading…</div>
+                <span class="code-label">YOUR DEVICE ID:</span>
+                <div id="deviceRequestCode" class="request-code-text">00000000</div>
             </div>
 
             <div class="input-group">
-                <input
-                    type="text"
-                    id="activationKeyInput"
-                    placeholder="Enter access code here…"
+                <input 
+                    type="text" 
+                    id="activationKeyInput" 
+                    placeholder="Enter numeric activation code..." 
                     class="lock-input"
-                    autocomplete="off"
-                    autocapitalize="characters"
-                    spellcheck="false"
                 >
-                <button onclick="validateLicenseKey()" class="activate-btn">
-                    Unlock App
-                </button>
+                <button onclick="validateTrialCode()" class="activate-btn">Start 7-Day Trial</button>
+                <button onclick="validateLicenseKey()" class="activate-btn" style="margin-top:8px;">Activate Lifetime Access</button>
             </div>
 
-            <button
-                id="whatsappPurchaseLink"
-                onclick="launchWhatsAppOrderingIntents()"
+                        <!-- CORRECTION: Replaced standard href link behavior with a direct inline onclick handler function -->
+            <button 
+                id="whatsappPurchaseLink" 
+                onclick="launchWhatsAppOrderingIntents()" 
                 style="display: block; width: 100%; background: #25d366; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; text-align: center; cursor: pointer; box-sizing: border-box; text-decoration: none; margin-top: 10px;"
             >
-                💬 Request Code via WhatsApp
+                💬 Order Key via WhatsApp
             </button>
-
-            <p class="lock-footer">
-                Designed by Engr Udu
-            </p>
+            <p class="lock-footer">Designed by Engr Udu</p>
         </div>
     </div>
 
-    <!-- Floating PSR Rule Reference Window -->
-    <div
-        id="ruleReferenceModal"
-        class="rule-reference-modal"
-        aria-hidden="true"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="ruleReferenceModalTitle"
-    >
-        <div class="rule-reference-card">
-            <div class="rule-reference-header">
-                <div>
-                    <h2 id="ruleReferenceModalTitle">Referenced PSR Rule</h2>
-                    <p id="ruleReferenceModalMeta"></p>
-                </div>
-                <button
-                    type="button"
-                    class="rule-reference-close"
-                    onclick="closeRuleReference()"
-                    aria-label="Close referenced rule"
-                >×</button>
-            </div>
-
-            <div id="ruleReferenceModalContent" class="rule-reference-content"></div>
+    <!-- Beautiful activation result window -->
+    <div id="activationMessageModal" class="activation-message-modal" aria-hidden="true">
+        <div class="activation-message-card" role="dialog" aria-modal="true" aria-labelledby="activationMessageTitle">
+            <button type="button" class="activation-message-close" onclick="closeActivationMessage()" aria-label="Close">×</button>
+            <div id="activationMessageIcon" class="activation-message-icon">✓</div>
+            <h3 id="activationMessageTitle">Activation</h3>
+            <p id="activationMessageText">Your activation status has been updated.</p>
+            <button type="button" class="activation-message-ok" onclick="closeActivationMessage()">Continue</button>
+        </div>
+    </div>
         </div>
     </div>
 
+        
     </main>
 
 <script>

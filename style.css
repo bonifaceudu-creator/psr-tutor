@@ -633,95 +633,108 @@ mark {
     text-align: center;
 }
 
-/* Floating referenced-rule reader */
-body.rule-reference-modal-open {
-    overflow: hidden;
-}
-
-.rule-reference-modal {
+/* ============================================================
+   ACTIVATION MESSAGE WINDOW
+   ============================================================ */
+.activation-message-modal {
     position: fixed;
     inset: 0;
-    z-index: 1000000;
-    display: none;
+    z-index: 10020;
+    display: flex;
     align-items: center;
     justify-content: center;
-    padding: 18px;
-    background: rgba(15, 23, 42, 0.68);
+    padding: 20px;
+    background: rgba(15, 23, 42, 0.58);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.activation-message-modal.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.activation-message-card {
+    position: relative;
+    width: min(92vw, 390px);
     box-sizing: border-box;
-}
-
-.rule-reference-modal.rule-reference-modal-visible {
-    display: flex;
-}
-
-.rule-reference-card {
-    width: min(94vw, 620px);
-    max-height: 88vh;
+    padding: 28px 24px 24px;
+    border-radius: 22px;
     background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.30);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+    text-align: center;
+    transform: translateY(10px) scale(0.97);
+    transition: transform 0.22s ease;
 }
 
-.rule-reference-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 16px 18px;
-    background: #008751;
-    color: #ffffff;
+.activation-message-modal.visible .activation-message-card {
+    transform: translateY(0) scale(1);
 }
 
-.rule-reference-header h2 {
-    margin: 0;
-    font-size: 1rem;
-    line-height: 1.3;
-}
-
-.rule-reference-header p {
-    margin: 5px 0 0;
-    font-size: 0.74rem;
-    opacity: 0.9;
-}
-
-.rule-reference-close {
-    flex: 0 0 auto;
-    width: 36px;
-    height: 36px;
-    border: none;
+.activation-message-close {
+    position: absolute;
+    top: 9px;
+    right: 11px;
+    width: 34px;
+    height: 34px;
+    border: 0;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.18);
-    color: #ffffff;
-    font-size: 1.6rem;
-    line-height: 1;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 25px;
+    line-height: 34px;
     cursor: pointer;
 }
 
-.rule-reference-content {
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 18px;
-    font-size: 0.92rem;
-    line-height: 1.6;
-    color: #374151;
-    white-space: pre-wrap;
+.activation-message-icon {
+    width: 62px;
+    height: 62px;
+    margin: 4px auto 15px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 31px;
+    font-weight: 800;
 }
 
-.psr-rule-reference {
-    display: inline;
-    padding: 0 2px;
-    margin: 0;
-    border: none;
-    border-radius: 3px;
-    background: #e6f4ea;
-    color: #006b40;
-    font: inherit;
+.activation-message-success .activation-message-icon {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.activation-message-error .activation-message-icon {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.activation-message-card h3 {
+    margin: 0 0 9px;
+    font-size: 1.22rem;
+    color: #0f172a;
+}
+
+.activation-message-card p {
+    margin: 0 auto 21px;
+    max-width: 310px;
+    color: #475569;
+    font-size: 0.92rem;
+    line-height: 1.55;
+}
+
+.activation-message-ok {
+    width: 100%;
+    border: 0;
+    border-radius: 11px;
+    padding: 12px 16px;
+    background: #0f766e;
+    color: #ffffff;
+    font-size: 0.92rem;
     font-weight: 700;
-    text-decoration: underline;
-    text-decoration-style: dotted;
-    text-underline-offset: 2px;
     cursor: pointer;
 }

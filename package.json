@@ -1,20 +1,18 @@
+
 {
   "name": "com.barry.psrengine",
   "displayName": "PSR Engine",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Offline Public Service Rules Engine",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [
-    "cordova",
-    "psr"
-  ],
+  "keywords": ["cordova", "psr"],
   "author": "Barry",
   "license": "ISC",
   "dependencies": {
     "cordova-android": "^12.0.0",
-    "cordova-plugin-device": "^2.1.0"
+    "cordova-plugin-device": "^3.0.0"
   }
 }
